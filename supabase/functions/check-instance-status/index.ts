@@ -64,9 +64,20 @@ serve(async (req) => {
 
     if (state === 'open') {
       newStatus = 'connected';
-      if (statusData?.instance?.owner) {
-        phoneNumber = statusData.instance.owner;
+      // Try multiple possible fields for phone number
+      phoneNumber = 
+        statusData?.instance?.owner ||
+        statusData?.owner ||
+        statusData?.instance?.instanceId ||
+        statusData?.instance?.profilePictureUrl?.split('@')[0] ||
+        phoneNumber;
+      
+      // Clean phone number (remove @s.whatsapp.net if present)
+      if (phoneNumber && typeof phoneNumber === 'string') {
+        phoneNumber = phoneNumber.split('@')[0];
       }
+      
+      console.log('Phone number found:', phoneNumber);
     } else if (state === 'close') {
       newStatus = 'disconnected';
     } else if (state === 'connecting') {
