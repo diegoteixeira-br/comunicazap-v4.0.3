@@ -1,10 +1,19 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { MessageCircle, Upload, Send, CheckCircle2 } from "lucide-react";
+import { MessageCircle, Upload, Send, CheckCircle2, LogIn } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
 
   const features = [
     {
@@ -42,11 +51,11 @@ const Index = () => {
           <Button
             size="lg"
             variant="hero"
-            onClick={() => navigate("/upload")}
+            onClick={() => navigate("/auth")}
             className="text-lg px-8 py-6 h-auto"
           >
-            <Upload className="h-5 w-5 mr-2" />
-            Começar Agora
+            <LogIn className="h-5 w-5 mr-2" />
+            Entrar / Cadastrar
           </Button>
         </div>
 
@@ -107,8 +116,8 @@ const Index = () => {
               </div>
             </div>
             <div className="mt-8 text-center">
-              <Button onClick={() => navigate("/upload")} size="lg">
-                Começar Agora
+              <Button onClick={() => navigate("/auth")} size="lg">
+                Entrar / Cadastrar
               </Button>
             </div>
           </CardContent>
