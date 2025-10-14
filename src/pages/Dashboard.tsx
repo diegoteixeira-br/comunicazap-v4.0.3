@@ -5,8 +5,19 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Upload, History, Phone, Power, Loader2, RefreshCw } from 'lucide-react';
+import { MessageSquare, Upload, History, Phone, Power, Loader2, RefreshCw, Unplug } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
@@ -15,6 +26,7 @@ const Dashboard = () => {
   const [stats, setStats] = useState({ total: 0, sent: 0, failed: 0 });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -105,6 +117,34 @@ const Dashboard = () => {
     }
   };
 
+  const handleDisconnectWhatsApp = async () => {
+    setDisconnecting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-whatsapp-instance', {
+        body: {}
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setWhatsappInstance(null);
+        toast({
+          title: "WhatsApp desconectado",
+          description: "Sua instância foi desconectada com sucesso.",
+        });
+      }
+    } catch (error: any) {
+      console.error('Disconnect error:', error);
+      toast({
+        title: "Erro ao desconectar",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setDisconnecting(false);
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
     toast({
@@ -161,13 +201,45 @@ const Dashboard = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                {whatsappInstance?.status !== 'connected' && (
+                {whatsappInstance?.status !== 'connected' ? (
                   <Link to="/connect-whatsapp">
                     <Button className="w-full">
                       <Phone className="mr-2 h-4 w-4" />
                       Conectar WhatsApp
                     </Button>
                   </Link>
+                ) : (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" className="w-full" disabled={disconnecting}>
+                        {disconnecting ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Desconectando...
+                          </>
+                        ) : (
+                          <>
+                            <Unplug className="mr-2 h-4 w-4" />
+                            Desconectar WhatsApp
+                          </>
+                        )}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Isso irá desconectar seu WhatsApp e remover a instância. Você precisará escanear o QR Code novamente para reconectar.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDisconnectWhatsApp}>
+                          Desconectar
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 )}
               </CardContent>
             </Card>
