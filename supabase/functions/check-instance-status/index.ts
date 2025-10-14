@@ -69,6 +69,27 @@ serve(async (req) => {
       newStatus = 'pending';
     }
 
+    // Try to resolve phone number if connected but missing
+    if (newStatus === 'connected' && (!phoneNumber || String(phoneNumber).length < 8)) {
+      try {
+        const listResp = await fetch(
+          `${evolutionApiUrl}/instance/fetchInstances`,
+          { headers: { 'apikey': evolutionApiKey } }
+        );
+        const listData = await listResp.json();
+        const found = Array.isArray(listData)
+          ? listData.find((it: any) => it?.instance?.instanceName === instance.instance_name)
+          : null;
+        const ownerJid = found?.instance?.owner ?? statusData?.instance?.owner;
+        if (ownerJid) {
+          // Normalize JID like 559999999999@s.whatsapp.net -> 559999999999
+          phoneNumber = String(ownerJid).split('@')[0];
+        }
+      } catch (e) {
+        console.warn('Could not fetch owner from fetchInstances:', e);
+      }
+    }
+
     await supabaseClient
       .from('whatsapp_instances')
       .update({ 

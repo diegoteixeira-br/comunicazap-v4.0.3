@@ -90,7 +90,29 @@ const Results = () => {
           return;
         }
 
-        setWhatsappInstance(data);
+        // Se conectado mas sem número, força atualização do status para buscar no Evolution API
+        if (!data.phone_number) {
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (sessionData.session) {
+            await supabase.functions.invoke('check-instance-status', {
+              body: {},
+              headers: {
+                Authorization: `Bearer ${sessionData.session.access_token}`,
+              },
+            });
+            // Rebuscar instância após a atualização
+            const { data: refreshed } = await supabase
+              .from('whatsapp_instances')
+              .select('*')
+              .eq('user_id', user.id)
+              .single();
+            setWhatsappInstance(refreshed || data);
+          } else {
+            setWhatsappInstance(data);
+          }
+        } else {
+          setWhatsappInstance(data);
+        }
       } catch (error) {
         console.error("Erro ao buscar instância:", error);
         toast.error("Erro ao verificar WhatsApp");
