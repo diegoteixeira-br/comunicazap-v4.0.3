@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Send, CheckCircle, AlertCircle, ArrowLeft, Info, ChevronDown, ChevronUp, Save, Trash2 } from "lucide-react";
+import { Send, CheckCircle, AlertCircle, ArrowLeft, Info, ChevronDown, ChevronUp, Save, Trash2, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { ClientData } from "./Upload";
 import { 
@@ -21,14 +21,17 @@ import {
   getCategoryIcon,
   getCategoryLabel
 } from "@/data/messageTemplates";
-
-const WEBHOOK_URL = "https://webhook.belaformaonline.com/webhook/disparo";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const Results = () => {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const [clients, setClients] = useState<ClientData[]>([]);
   const [sendingStatus, setSendingStatus] = useState<{ [key: number]: "idle" | "sending" | "success" | "error" }>({});
   const [customMessage, setCustomMessage] = useState("");
+  const [whatsappInstance, setWhatsappInstance] = useState<any>(null);
+  const [loadingInstance, setLoadingInstance] = useState(true);
   
   // Template states
   const [showTemplates, setShowTemplates] = useState(false);
@@ -39,6 +42,14 @@ const Results = () => {
   const [newTemplateCategory, setNewTemplateCategory] = useState<MessageTemplate["category"]>("personalizado");
 
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!user) {
+      toast.error("Autenticação necessária");
+      navigate("/auth");
+      return;
+    }
+
     const storedData = sessionStorage.getItem("clientData");
     if (!storedData) {
       toast.error("Nenhum dado encontrado", {
@@ -56,7 +67,41 @@ const Results = () => {
       toast.error("Erro ao carregar dados");
       navigate("/upload");
     }
-  }, [navigate]);
+  }, [navigate, user, authLoading]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchWhatsAppInstance = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('whatsapp_instances')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error) throw error;
+
+        if (!data || data.status !== 'connected') {
+          toast.error("WhatsApp não conectado", {
+            description: "Por favor, conecte seu WhatsApp primeiro"
+          });
+          navigate("/connect-whatsapp");
+          return;
+        }
+
+        setWhatsappInstance(data);
+      } catch (error) {
+        console.error("Erro ao buscar instância:", error);
+        toast.error("Erro ao verificar WhatsApp");
+        navigate("/connect-whatsapp");
+      } finally {
+        setLoadingInstance(false);
+      }
+    };
+
+    fetchWhatsAppInstance();
+  }, [user, navigate]);
 
   useEffect(() => {
     setTemplates(getAllTemplates());
@@ -68,93 +113,126 @@ const Results = () => {
       .replace(/{telefone}/g, client["Telefone do Cliente"]);
   };
 
-  const handleSend = async (client: ClientData, index: number) => {
+  const handleSend = async (client: ClientData, index: number, campaignId?: string) => {
     setSendingStatus(prev => ({ ...prev, [index]: "sending" }));
 
     try {
       const processedMessage = customMessage ? replaceVariables(customMessage, client) : "";
       
-      // Validação da mensagem
       if (!processedMessage.trim()) {
         toast.error("Mensagem vazia", {
           description: "Por favor, digite uma mensagem antes de enviar"
         });
         setSendingStatus(prev => ({ ...prev, [index]: "error" }));
-        return;
+        return false;
       }
 
-      const payload = {
+      if (!whatsappInstance) {
+        toast.error("WhatsApp não conectado");
+        setSendingStatus(prev => ({ ...prev, [index]: "error" }));
+        return false;
+      }
+
+      const clientData = {
         nome: client["Nome do Cliente"],
         telefone: client["Telefone do Cliente"],
         mensagem: processedMessage,
       };
 
-      console.log("🚀 Enviando mensagem:", {
-        index: index + 1,
-        cliente: payload.nome,
-        telefone: payload.telefone,
-        mensagem: payload.mensagem,
-        timestamp: new Date().toISOString()
-      });
-      
-      const response = await fetch(WEBHOOK_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
+      console.log("🚀 Enviando via edge function:", clientData);
+
+      const { data, error } = await supabase.functions.invoke('send-messages', {
+        body: {
+          clients: [clientData],
+          message: processedMessage,
+          campaignName: campaignId || `Envio individual - ${new Date().toLocaleString('pt-BR')}`
+        }
       });
 
-      const responseData = await response.json().catch(() => null);
-      
-      console.log("📥 Resposta do servidor:", {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok,
-        data: responseData,
-        cliente: payload.nome
-      });
+      if (error) throw error;
 
-      if (response.ok) {
+      if (data?.success) {
         setSendingStatus(prev => ({ ...prev, [index]: "success" }));
         toast.success("Mensagem enviada!", {
           description: `Enviado para ${client["Nome do Cliente"]}`
         });
-        console.log("✅ Sucesso para:", payload.nome);
+        console.log("✅ Sucesso:", data);
+        return true;
       } else {
-        console.error("❌ Erro na resposta:", response.status, responseData);
-        throw new Error(`Erro ${response.status}: ${response.statusText}`);
+        throw new Error(data?.error || 'Falha ao enviar');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Erro ao enviar:", error);
       setSendingStatus(prev => ({ ...prev, [index]: "error" }));
       toast.error("Erro ao enviar", {
-        description: `Não foi possível enviar para ${client["Nome do Cliente"]}`
+        description: error.message || `Não foi possível enviar para ${client["Nome do Cliente"]}`
       });
+      return false;
     }
   };
 
   const handleSendAll = async () => {
-    toast.info("Enviando mensagens...", {
-      description: "Processando todos os clientes sequencialmente"
-    });
-
-    for (let i = 0; i < clients.length; i++) {
-      toast.info(`Enviando ${i + 1}/${clients.length}`, {
-        description: `Cliente: ${clients[i]["Nome do Cliente"]}`
-      });
-      
-      await handleSend(clients[i], i);
-      
-      // Delay de 3 segundos entre cada envio para garantir envio sequencial
-      if (i < clients.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      }
+    if (!customMessage.trim()) {
+      toast.error("Digite uma mensagem antes de enviar");
+      return;
     }
 
-    toast.success("Envio concluído!", {
-      description: `${clients.length} mensagens processadas`
+    if (!whatsappInstance) {
+      toast.error("WhatsApp não conectado");
+      navigate("/connect-whatsapp");
+      return;
+    }
+
+    const campaignName = `Envio em massa - ${new Date().toLocaleString('pt-BR')}`;
+
+    toast.info("Enviando mensagens...", {
+      description: "Processando todos os clientes"
     });
+
+    try {
+      const clientsData = clients.map(client => ({
+        nome: client["Nome do Cliente"],
+        telefone: client["Telefone do Cliente"],
+        mensagem: replaceVariables(customMessage, client)
+      }));
+
+      console.log("🚀 Enviando em massa:", { total: clientsData.length, campaignName });
+
+      const { data, error } = await supabase.functions.invoke('send-messages', {
+        body: {
+          clients: clientsData,
+          message: customMessage,
+          campaignName
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        // Atualizar status de todos
+        const newStatus: any = {};
+        clients.forEach((_, i) => {
+          newStatus[i] = "success";
+        });
+        setSendingStatus(newStatus);
+
+        toast.success("Envio concluído!", {
+          description: `${data.successCount} mensagens enviadas com sucesso`
+        });
+
+        // Redirecionar para histórico após 2 segundos
+        setTimeout(() => {
+          navigate("/history");
+        }, 2000);
+      } else {
+        throw new Error(data?.error || 'Falha no envio em massa');
+      }
+    } catch (error: any) {
+      console.error("❌ Erro no envio em massa:", error);
+      toast.error("Erro ao enviar mensagens", {
+        description: error.message || "Tente novamente"
+      });
+    }
   };
 
   const getStatusBadge = (status: "idle" | "sending" | "success" | "error") => {
@@ -252,13 +330,24 @@ const Results = () => {
   const successCount = Object.values(sendingStatus).filter(s => s === "success").length;
   const errorCount = Object.values(sendingStatus).filter(s => s === "error").length;
 
+  if (authLoading || loadingInstance) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
       <div className="container max-w-6xl mx-auto px-4 py-12">
         <div className="mb-8">
           <Button
             variant="ghost"
-            onClick={() => navigate("/upload")}
+            onClick={() => navigate("/dashboard")}
             className="mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -268,6 +357,22 @@ const Results = () => {
           <p className="text-muted-foreground mb-6">
             {clients.length} cliente(s) encontrado(s)
           </p>
+          
+          {whatsappInstance && (
+            <Card className="mb-6 bg-primary/5 border-primary/20">
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-3">
+                  <Smartphone className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="font-medium">WhatsApp Conectado</p>
+                    <p className="text-sm text-muted-foreground">
+                      {whatsappInstance.phone_number || 'Número não disponível'}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Templates Section */}
