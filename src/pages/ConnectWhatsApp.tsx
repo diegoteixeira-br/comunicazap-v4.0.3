@@ -33,11 +33,14 @@ const ConnectWhatsApp = () => {
       if (error) throw error;
 
       if (data.success) {
+        console.log('QR Code received:', data.qrCode ? 'YES' : 'NO');
         setQrCode(data.qrCode);
         toast({
           title: "QR Code gerado!",
           description: "Escaneie o código com seu WhatsApp",
         });
+      } else {
+        throw new Error(data.error || 'Falha ao gerar QR Code');
       }
     } catch (error: any) {
       toast({
@@ -125,7 +128,7 @@ const ConnectWhatsApp = () => {
               <div className="space-y-4 w-full">
                 <div className="bg-white p-4 rounded-lg shadow-lg">
                   <img
-                    src={`data:image/png;base64,${qrCode}`}
+                    src={qrCode.startsWith('data:') ? qrCode : `data:image/png;base64,${qrCode}`}
                     alt="QR Code"
                     className="w-full max-w-sm mx-auto"
                   />
