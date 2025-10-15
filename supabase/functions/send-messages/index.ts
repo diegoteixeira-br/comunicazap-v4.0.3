@@ -170,9 +170,9 @@ serve(async (req) => {
         results.push({ success: false, client: client["Nome do Cliente"], error: error.message });
       }
 
-      // Aguardar 30 segundos antes do próximo envio (exceto no último)
+      // Aguardar 3 segundos antes do próximo envio (exceto no último)
       if (i < clients.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 30000));
+        await new Promise(resolve => setTimeout(resolve, 3000));
       }
     }
 
