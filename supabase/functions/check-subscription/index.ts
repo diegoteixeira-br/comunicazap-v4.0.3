@@ -72,6 +72,20 @@ serve(async (req) => {
       limit: 1,
     });
     
+    logStep("Subscriptions retrieved", { 
+      count: subscriptions.data.length,
+      subscriptions: subscriptions.data.map((sub: any) => ({
+        id: sub.id,
+        status: sub.status,
+        current_period_end: sub.current_period_end,
+        current_period_start: sub.current_period_start,
+        items: sub.items.data.map((item: any) => ({
+          price_id: item.price.id,
+          product: item.price.product
+        }))
+      }))
+    });
+    
     const hasActiveSub = subscriptions.data.length > 0;
     let subscriptionEnd = null;
     let stripeSubscriptionId = null;
@@ -79,6 +93,12 @@ serve(async (req) => {
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
+      logStep("Processing subscription", { 
+        id: subscription.id,
+        status: subscription.status,
+        current_period_end: subscription.current_period_end,
+        current_period_start: subscription.current_period_start
+      });
       
       // Validar timestamps antes de processar
       const periodEnd = subscription.current_period_end;
