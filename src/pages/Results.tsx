@@ -6,11 +6,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Send, CheckCircle, AlertCircle, ArrowLeft, Info, ChevronDown, ChevronUp, Save, Trash2, Smartphone, ImagePlus, X, Upload } from "lucide-react";
+import { Send, CheckCircle, AlertCircle, ArrowLeft, Info, ChevronDown, ChevronUp, Save, Trash2, Smartphone, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { ClientData } from "./Upload";
 import { 
@@ -23,7 +24,6 @@ import {
 } from "@/data/messageTemplates";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { ImportContactsModal } from "@/components/ImportContactsModal";
 
 const Results = () => {
   const navigate = useNavigate();
@@ -43,7 +43,7 @@ const Results = () => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState("");
   const [newTemplateCategory, setNewTemplateCategory] = useState<MessageTemplate["category"]>("personalizado");
-  const [showImportModal, setShowImportModal] = useState(false);
+  const [selectedClients, setSelectedClients] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (authLoading) return;
@@ -410,23 +410,52 @@ const Results = () => {
     toast.info("Mensagem limpa");
   };
 
-  const handleImportContacts = (importedContacts: Array<{ name: string; phone: string }>) => {
-    const formattedContacts: ClientData[] = importedContacts.map(contact => ({
-      "Nome do Cliente": contact.name,
-      "Telefone do Cliente": contact.phone
-    }));
-    
-    setClients(formattedContacts);
-    
-    // Atualizar sessionStorage
-    sessionStorage.setItem("clientData", JSON.stringify(formattedContacts));
-    
-    toast.success(`${formattedContacts.length} contatos importados do WhatsApp!`);
-  };
-
   const getFilteredTemplates = (category: string) => {
     if (category === "todos") return templates;
     return templates.filter(t => t.category === category);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedClients.size === clients.length) {
+      setSelectedClients(new Set());
+    } else {
+      setSelectedClients(new Set(clients.map((_, index) => index)));
+    }
+  };
+
+  const handleSelectClient = (index: number) => {
+    const newSelected = new Set(selectedClients);
+    if (newSelected.has(index)) {
+      newSelected.delete(index);
+    } else {
+      newSelected.add(index);
+    }
+    setSelectedClients(newSelected);
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedClients.size === 0) {
+      toast.error("Nenhum cliente selecionado");
+      return;
+    }
+
+    if (confirm(`Tem certeza que deseja excluir ${selectedClients.size} cliente(s) selecionado(s)?`)) {
+      const newClients = clients.filter((_, index) => !selectedClients.has(index));
+      setClients(newClients);
+      
+      // Atualizar sessionStorage
+      sessionStorage.setItem("clientData", JSON.stringify(newClients));
+      
+      // Limpar seleção e status de envio dos clientes excluídos
+      setSelectedClients(new Set());
+      const newStatus = { ...sendingStatus };
+      selectedClients.forEach(index => {
+        delete newStatus[index];
+      });
+      setSendingStatus(newStatus);
+      
+      toast.success(`${selectedClients.size} cliente(s) excluído(s)`);
+    }
   };
 
   const successCount = Object.values(sendingStatus).filter(s => s === "success").length;
@@ -455,21 +484,11 @@ const Results = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Button>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-4xl font-bold mb-2">Clientes Carregados</h1>
-              <p className="text-muted-foreground">
-                {clients.length} cliente(s) encontrado(s)
-              </p>
-            </div>
-            <Button 
-              onClick={() => setShowImportModal(true)}
-              variant="outline"
-              className="gap-2"
-            >
-              <Upload className="h-4 w-4" />
-              Importar do WhatsApp
-            </Button>
+          <div>
+            <h1 className="text-4xl font-bold mb-2">Clientes Carregados</h1>
+            <p className="text-muted-foreground">
+              {clients.length} cliente(s) encontrado(s)
+            </p>
           </div>
           
           {whatsappInstance && (
@@ -796,16 +815,36 @@ const Results = () => {
 
         <Card className="shadow-elevated">
           <CardHeader>
-            <CardTitle>Lista de Clientes</CardTitle>
-            <CardDescription>
-              Clique em "Enviar" para disparar a mensagem para cada cliente
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Lista de Clientes</CardTitle>
+                <CardDescription>
+                  Selecione clientes para excluir ou clique em "Enviar" para disparar mensagens
+                </CardDescription>
+              </div>
+              {selectedClients.size > 0 && (
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteSelected}
+                  className="gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Excluir Selecionados ({selectedClients.size})
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[50px]">
+                      <Checkbox
+                        checked={selectedClients.size === clients.length && clients.length > 0}
+                        onCheckedChange={handleSelectAll}
+                      />
+                    </TableHead>
                     <TableHead className="w-[50px]">#</TableHead>
                     <TableHead>Nome do Cliente</TableHead>
                     <TableHead>Telefone do Cliente</TableHead>
@@ -816,6 +855,12 @@ const Results = () => {
                 <TableBody>
                   {clients.map((client, index) => (
                     <TableRow key={index}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedClients.has(index)}
+                          onCheckedChange={() => handleSelectClient(index)}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">{index + 1}</TableCell>
                       <TableCell className="font-medium">
                         {client["Nome do Cliente"]}
@@ -854,13 +899,6 @@ const Results = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Import Contacts Modal */}
-      <ImportContactsModal
-        open={showImportModal}
-        onOpenChange={setShowImportModal}
-        onImport={handleImportContacts}
-      />
     </div>
   );
 };
