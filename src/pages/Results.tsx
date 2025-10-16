@@ -482,7 +482,7 @@ const Results = () => {
             className="mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar para o início
+            Voltar ao Dashboard
           </Button>
           <div>
             <h1 className="text-4xl font-bold mb-2">Clientes Carregados</h1>

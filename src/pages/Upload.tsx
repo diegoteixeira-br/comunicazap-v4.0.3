@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload as UploadIcon, FileSpreadsheet, AlertCircle } from "lucide-react";
+import { Upload as UploadIcon, FileSpreadsheet, AlertCircle, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import Papa from "papaparse";
@@ -125,10 +125,11 @@ const Upload = () => {
         <div className="mb-8">
           <Button
             variant="ghost"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/dashboard")}
             className="mb-4"
           >
-            ← Voltar para início
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Voltar ao Dashboard
           </Button>
           <div className="text-center">
             <h1 className="text-4xl font-bold mb-4">Upload de Planilha</h1>
