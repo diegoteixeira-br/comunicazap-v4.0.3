@@ -1,1 +1,4 @@
 project_id = "pxzvpnshhulrsjbeqqhn"
+
+[functions.fetch-whatsapp-contacts]
+verify_jwt = true

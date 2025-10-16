@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Send, CheckCircle, AlertCircle, ArrowLeft, Info, ChevronDown, ChevronUp, Save, Trash2, Smartphone, ImagePlus, X } from "lucide-react";
+import { Send, CheckCircle, AlertCircle, ArrowLeft, Info, ChevronDown, ChevronUp, Save, Trash2, Smartphone, ImagePlus, X, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { ClientData } from "./Upload";
 import { 
@@ -23,6 +23,7 @@ import {
 } from "@/data/messageTemplates";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { ImportContactsModal } from "@/components/ImportContactsModal";
 
 const Results = () => {
   const navigate = useNavigate();
@@ -42,6 +43,7 @@ const Results = () => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState("");
   const [newTemplateCategory, setNewTemplateCategory] = useState<MessageTemplate["category"]>("personalizado");
+  const [showImportModal, setShowImportModal] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -408,6 +410,20 @@ const Results = () => {
     toast.info("Mensagem limpa");
   };
 
+  const handleImportContacts = (importedContacts: Array<{ name: string; phone: string }>) => {
+    const formattedContacts: ClientData[] = importedContacts.map(contact => ({
+      "Nome do Cliente": contact.name,
+      "Telefone do Cliente": contact.phone
+    }));
+    
+    setClients(formattedContacts);
+    
+    // Atualizar sessionStorage
+    sessionStorage.setItem("clientData", JSON.stringify(formattedContacts));
+    
+    toast.success(`${formattedContacts.length} contatos importados do WhatsApp!`);
+  };
+
   const getFilteredTemplates = (category: string) => {
     if (category === "todos") return templates;
     return templates.filter(t => t.category === category);
@@ -439,10 +455,22 @@ const Results = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Button>
-          <h1 className="text-4xl font-bold mb-2">Clientes Carregados</h1>
-          <p className="text-muted-foreground mb-6">
-            {clients.length} cliente(s) encontrado(s)
-          </p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">Clientes Carregados</h1>
+              <p className="text-muted-foreground">
+                {clients.length} cliente(s) encontrado(s)
+              </p>
+            </div>
+            <Button 
+              onClick={() => setShowImportModal(true)}
+              variant="outline"
+              className="gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              Importar do WhatsApp
+            </Button>
+          </div>
           
           {whatsappInstance && (
             <Card className="mb-6 bg-primary/5 border-primary/20">
@@ -826,6 +854,13 @@ const Results = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Import Contacts Modal */}
+      <ImportContactsModal
+        open={showImportModal}
+        onOpenChange={setShowImportModal}
+        onImport={handleImportContacts}
+      />
     </div>
   );
 };
