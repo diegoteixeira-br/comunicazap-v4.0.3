@@ -41,9 +41,11 @@ const Dashboard = () => {
   const [checkingSubscription, setCheckingSubscription] = useState(true);
   const [openingPortal, setOpeningPortal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [userProfile, setUserProfile] = useState<{ full_name: string | null } | null>(null);
 
   useEffect(() => {
     if (user) {
+      fetchUserProfile();
       fetchWhatsAppInstance();
       fetchCampaigns();
       checkSubscription();
@@ -70,6 +72,16 @@ const Dashboard = () => {
       };
     }
   }, [user]);
+
+  const fetchUserProfile = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user?.id)
+      .maybeSingle();
+    
+    setUserProfile(data);
+  };
 
   const fetchWhatsAppInstance = async () => {
     const { data } = await supabase
@@ -314,7 +326,10 @@ const Dashboard = () => {
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               Dashboard
             </h1>
-            <p className="text-muted-foreground mt-1">Bem-vindo, {user?.email}</p>
+            <p className="text-muted-foreground mt-1">
+              Bem-vindo(a), {userProfile?.full_name?.split(' ')[0] || user?.email?.split('@')[0]}
+            </p>
+            <p className="text-muted-foreground text-sm">{user?.email}</p>
           </div>
           <Button variant="outline" onClick={handleSignOut} className="gap-2">
             <Power className="h-4 w-4" />
