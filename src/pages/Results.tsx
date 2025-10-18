@@ -769,8 +769,8 @@ const Results = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="container max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-6">
+      <div className="container max-w-7xl mx-auto px-4 py-4 sm:py-8">
+        <div className="mb-4 sm:mb-6">
           <Button
             variant="ghost"
             onClick={() => {
@@ -786,11 +786,12 @@ const Results = () => {
             disabled={isSending}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar ao Dashboard
+            <span className="hidden sm:inline">Voltar ao Dashboard</span>
+            <span className="sm:hidden">Voltar</span>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold mb-2">Nova Campanha</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Nova Campanha</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               {clients.length} cliente(s) carregado(s)
             </p>
           </div>
@@ -813,14 +814,14 @@ const Results = () => {
         </div>
 
         {/* TWO COLUMN LAYOUT */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* LEFT COLUMN: Message Composition */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex items-center gap-2 mb-2 sm:mb-4">
+              <div className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm sm:text-base">
                 1
               </div>
-              <h2 className="text-xl font-semibold">Escreva sua Mensagem</h2>
+              <h2 className="text-lg sm:text-xl font-semibold">Escreva sua Mensagem</h2>
             </div>
 
             {/* Templates Section */}
@@ -1080,12 +1081,12 @@ const Results = () => {
           </div>
 
           {/* RIGHT COLUMN: Client Selection */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex items-center gap-2 mb-2 sm:mb-4">
+              <div className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm sm:text-base">
                 2
               </div>
-              <h2 className="text-xl font-semibold">Selecione os Destinatários</h2>
+              <h2 className="text-lg sm:text-xl font-semibold">Selecione os Destinatários</h2>
             </div>
 
             {/* Progress Tracking */}
@@ -1249,18 +1250,20 @@ const Results = () => {
                 </div>
 
                 {/* Send Button at Bottom */}
-                <div className="mt-6 flex justify-end">
+                <div className="mt-4 sm:mt-6">
                   <Button
                     onClick={handleSendAll}
                     size="lg"
-                    className="w-full sm:w-auto"
+                    className="w-full"
                     disabled={isSending || Object.values(sendingStatus).some(s => s === "sending")}
                   >
-                    <Send className="h-5 w-5 mr-2" />
-                    {selectedClients.size > 0 && selectedClients.size < clients.length
-                      ? `Enviar para Todos Não Selecionados (${clients.length - selectedClients.size})`
-                      : `Enviar para Todos (${clients.length})`
-                    }
+                    <Send className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                    <span className="text-sm sm:text-base">
+                      {selectedClients.size > 0 && selectedClients.size < clients.length
+                        ? `Enviar (${clients.length - selectedClients.size})`
+                        : `Enviar para Todos (${clients.length})`
+                      }
+                    </span>
                   </Button>
                 </div>
               </CardContent>

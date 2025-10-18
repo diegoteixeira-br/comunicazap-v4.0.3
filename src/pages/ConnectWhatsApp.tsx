@@ -138,7 +138,7 @@ const ConnectWhatsApp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 to-secondary/10 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary/10 to-secondary/10 p-3 sm:p-4">
       <div className="max-w-2xl mx-auto">
         <Button
           variant="ghost"
@@ -146,7 +146,8 @@ const ConnectWhatsApp = () => {
           className="mb-4"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar ao Dashboard
+          <span className="hidden sm:inline">Voltar ao Dashboard</span>
+          <span className="sm:hidden">Voltar</span>
         </Button>
 
         <Card>
@@ -171,25 +172,25 @@ const ConnectWhatsApp = () => {
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Gerando QR Code...
+                      <span className="text-sm sm:text-base">Gerando QR Code...</span>
                     </>
                   ) : (
-                    'Gerar QR Code'
+                    <span className="text-sm sm:text-base">Gerar QR Code</span>
                   )}
                 </Button>
               )}
 
               {qrCode && !connected && (
                 <div className="space-y-4 w-full">
-                  <div className="bg-white p-4 rounded-lg shadow-lg">
+                  <div className="bg-white p-3 sm:p-4 rounded-lg shadow-lg">
                     <img
                       src={qrCode.startsWith('data:') ? qrCode : `data:image/png;base64,${qrCode}`}
                       alt="QR Code"
-                      className="w-full max-w-sm mx-auto"
+                      className="w-full max-w-xs sm:max-w-sm mx-auto"
                     />
                   </div>
                   <div className="text-center">
-                    <p className="text-sm text-muted-foreground mb-2">
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-2">
                       1. Abra o WhatsApp no seu celular<br />
                       2. Toque em Mais opções &gt; Dispositivos conectados<br />
                       3. Toque em Conectar dispositivo<br />

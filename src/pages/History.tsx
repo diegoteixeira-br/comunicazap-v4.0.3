@@ -48,7 +48,7 @@ const History = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 to-secondary/10 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary/10 to-secondary/10 p-3 sm:p-4">
       <div className="max-w-6xl mx-auto">
         <Button
           variant="ghost"
@@ -56,7 +56,8 @@ const History = () => {
           className="mb-4"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar ao Dashboard
+          <span className="hidden sm:inline">Voltar ao Dashboard</span>
+          <span className="sm:hidden">Voltar</span>
         </Button>
 
         <Card>
@@ -73,41 +74,43 @@ const History = () => {
                 Nenhuma campanha encontrada
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nome da Campanha</TableHead>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead>Enviados</TableHead>
-                      <TableHead>Falhas</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {campaigns.map((campaign) => (
-                      <TableRow key={campaign.id}>
-                        <TableCell className="font-medium">
-                          {campaign.campaign_name}
-                        </TableCell>
-                        <TableCell>
-                          {format(new Date(campaign.created_at), 'dd/MM/yyyy HH:mm', {
-                            locale: ptBR,
-                          })}
-                        </TableCell>
-                        <TableCell>{campaign.total_contacts}</TableCell>
-                        <TableCell className="text-green-600">
-                          {campaign.sent_count}
-                        </TableCell>
-                        <TableCell className="text-red-600">
-                          {campaign.failed_count}
-                        </TableCell>
-                        <TableCell>{getStatusBadge(campaign.status)}</TableCell>
+              <div className="overflow-x-auto -mx-6 sm:mx-0">
+                <div className="inline-block min-w-full align-middle px-6 sm:px-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-xs sm:text-sm">Campanha</TableHead>
+                        <TableHead className="text-xs sm:text-sm hidden sm:table-cell">Data</TableHead>
+                        <TableHead className="text-xs sm:text-sm">Total</TableHead>
+                        <TableHead className="text-xs sm:text-sm">Enviados</TableHead>
+                        <TableHead className="text-xs sm:text-sm hidden md:table-cell">Falhas</TableHead>
+                        <TableHead className="text-xs sm:text-sm">Status</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {campaigns.map((campaign) => (
+                        <TableRow key={campaign.id}>
+                          <TableCell className="font-medium text-xs sm:text-sm max-w-[150px] truncate">
+                            {campaign.campaign_name}
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm hidden sm:table-cell whitespace-nowrap">
+                            {format(new Date(campaign.created_at), 'dd/MM/yy HH:mm', {
+                              locale: ptBR,
+                            })}
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm">{campaign.total_contacts}</TableCell>
+                          <TableCell className="text-green-600 text-xs sm:text-sm">
+                            {campaign.sent_count}
+                          </TableCell>
+                          <TableCell className="text-red-600 text-xs sm:text-sm hidden md:table-cell">
+                            {campaign.failed_count}
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm">{getStatusBadge(campaign.status)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             )}
           </CardContent>

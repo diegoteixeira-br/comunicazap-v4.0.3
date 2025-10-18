@@ -121,19 +121,20 @@ const Upload = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
-      <div className="container max-w-4xl mx-auto px-4 py-12">
-        <div className="mb-8">
+      <div className="container max-w-4xl mx-auto px-4 py-6 sm:py-12">
+        <div className="mb-6 sm:mb-8">
           <Button
             variant="ghost"
             onClick={() => navigate("/dashboard")}
             className="mb-4"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar ao Dashboard
+            <span className="hidden sm:inline">Voltar ao Dashboard</span>
+            <span className="sm:hidden">Voltar</span>
           </Button>
           <div className="text-center">
-            <h1 className="text-4xl font-bold mb-4">Upload de Planilha</h1>
-            <p className="text-muted-foreground text-lg">
+            <h1 className="text-2xl sm:text-4xl font-bold mb-4">Upload de Planilha</h1>
+            <p className="text-muted-foreground text-sm sm:text-lg">
               Envie sua planilha com os dados dos clientes para começar
             </p>
           </div>
@@ -154,7 +155,7 @@ const Upload = () => {
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
-              className={`border-2 border-dashed rounded-lg p-12 text-center transition-all ${
+              className={`border-2 border-dashed rounded-lg p-6 sm:p-12 text-center transition-all ${
                 isDragging
                   ? "border-primary bg-primary/5 scale-105"
                   : "border-border hover:border-primary/50"
@@ -169,12 +170,12 @@ const Upload = () => {
                 disabled={isProcessing}
               />
               <div className="flex flex-col items-center gap-4">
-                <UploadIcon className={`h-16 w-16 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
+                <UploadIcon className={`h-12 w-12 sm:h-16 sm:w-16 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
                 <div>
-                  <p className="text-lg font-medium mb-2">
+                  <p className="text-base sm:text-lg font-medium mb-2">
                     {isProcessing ? "Processando..." : "Arraste e solte seu arquivo aqui"}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     ou clique para selecionar
                   </p>
                 </div>
@@ -183,6 +184,7 @@ const Upload = () => {
                     variant="outline" 
                     size="lg" 
                     type="button"
+                    className="w-full sm:w-auto"
                     onClick={() => document.getElementById('file-input')?.click()}
                   >
                     Selecionar Arquivo

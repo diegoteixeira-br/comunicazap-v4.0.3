@@ -367,19 +367,19 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 p-3 sm:p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <div className="flex-1">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               Dashboard
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-sm sm:text-base text-muted-foreground mt-1">
               Bem-vindo(a), {userProfile?.full_name?.split(' ')[0] || user?.email?.split('@')[0]}
             </p>
             <div className="flex items-center gap-2">
-              <p className="text-muted-foreground text-sm">
+              <p className="text-muted-foreground text-xs sm:text-sm">
                 {showEmail ? user?.email : maskEmail(user?.email || '')}
               </p>
               <button
@@ -390,9 +390,9 @@ const Dashboard = () => {
               </button>
             </div>
           </div>
-          <Button variant="outline" onClick={handleSignOut} className="gap-2">
+          <Button variant="outline" onClick={handleSignOut} className="gap-2 w-full sm:w-auto">
             <Power className="h-4 w-4" />
-            Sair
+            <span className="sm:inline">Sair</span>
           </Button>
         </div>
 
@@ -401,9 +401,9 @@ const Dashboard = () => {
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {/* Stats Cards - Topo */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <Card className="border-primary/20 hover:border-primary/40 transition-colors">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
@@ -448,7 +448,7 @@ const Dashboard = () => {
             </div>
 
             {/* Action Cards - Meio */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <Card 
                 className="cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5"
                 onClick={handleNewCampaign}
@@ -488,7 +488,7 @@ const Dashboard = () => {
             </div>
 
             {/* Configuration Section - Bottom */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               {/* WhatsApp Status */}
               <Card className="border-2">
                 <CardHeader>
