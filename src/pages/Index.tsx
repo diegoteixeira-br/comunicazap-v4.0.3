@@ -215,7 +215,7 @@ const Index = () => {
                   ⚠️ PROMOÇÃO POR TEMPO LIMITADO - PODE ACABAR A QUALQUER MOMENTO
                 </div>
               </div>
-              <CardHeader className="pb-4 pt-8">
+              <CardHeader className="pb-4 pt-16">
                 <div className="text-center">
                   <div className="flex flex-col items-center gap-1 mb-3">
                     <div className="flex items-center gap-2">
