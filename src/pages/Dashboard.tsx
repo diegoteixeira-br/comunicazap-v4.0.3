@@ -310,9 +310,12 @@ const Dashboard = () => {
         title: "Logout realizado",
         description: "Até logo!",
       });
-      navigate('/auth', { replace: true });
+      // Redireciono forçado para evitar qualquer estado preso
+      window.location.replace('/auth');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
+      // Mesmo com erro, força a navegação para a tela de login
+      window.location.replace('/auth');
     }
   };
 
