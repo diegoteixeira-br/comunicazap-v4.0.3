@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle, Upload, Send, LogIn, Clock, Shield, Zap, BarChart3, Users, CheckCircle, Crown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
+import logo from "@/assets/comunicazap-logo.png";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -68,6 +69,31 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 overflow-x-hidden">
+      {/* Header/Navbar */}
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex h-16 items-center justify-between">
+            {/* Logo e Nome */}
+            <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
+              <img src={logo} alt="ComunicaZap Logo" className="h-10 w-10 sm:h-12 sm:w-12" />
+              <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                ComunicaZap
+              </span>
+            </div>
+
+            {/* Botão Login */}
+            <Button 
+              onClick={() => navigate("/auth")} 
+              variant="default"
+              className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-all hover:scale-105"
+            >
+              <LogIn className="h-4 w-4" />
+              <span className="hidden sm:inline">Entrar</span>
+            </Button>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
       <div className="container max-w-6xl mx-auto px-4 py-20">
         <div className="text-center mb-16">
