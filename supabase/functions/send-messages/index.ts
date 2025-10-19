@@ -94,7 +94,15 @@ serve(async (req) => {
 
     console.log('Campaign created:', campaign.id);
 
-    const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL') ?? '';
+    const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL');
+    
+    if (!n8nWebhookUrl) {
+      throw new Error('N8N webhook URL not configured');
+    }
+    
+    if (!instance.api_key) {
+      throw new Error('Instance API key missing. Please reconnect your WhatsApp.');
+    }
 
     const results = [];
 
@@ -109,7 +117,7 @@ serve(async (req) => {
           .select('id')
           .eq('user_id', user.id)
           .eq('phone_number', client["Telefone do Cliente"])
-          .single();
+          .maybeSingle();
 
         if (blockedContact) {
           console.log(`Contact ${client["Nome do Cliente"]} is blocked, skipping`);

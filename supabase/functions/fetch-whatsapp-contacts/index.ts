@@ -58,6 +58,13 @@ serve(async (req) => {
     // Fetch contacts from Evolution API
     const evolutionApiUrl = Deno.env.get('EVOLUTION_API_URL');
     const evolutionApiKey = Deno.env.get('EVOLUTION_API_KEY');
+    
+    if (!evolutionApiUrl || !evolutionApiKey) {
+      return new Response(
+        JSON.stringify({ error: 'Evolution API configuration missing' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     const response = await fetch(
       `${evolutionApiUrl}/chat/findContacts/${instance.instance_name}`,

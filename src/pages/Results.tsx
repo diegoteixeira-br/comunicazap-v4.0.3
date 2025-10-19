@@ -288,8 +288,8 @@ const Results = () => {
     // Fetch inicial
     fetchCampaignData();
 
-    // Polling a cada 2 segundos
-    pollingInterval = setInterval(fetchCampaignData, 2000);
+    // Polling a cada 3 segundos (reduzido para melhor performance)
+    pollingInterval = setInterval(fetchCampaignData, 3000);
 
     // Subscribe para atualizações em tempo real (backup do polling)
     const logsChannel = supabase
@@ -436,13 +436,16 @@ const Results = () => {
       const { data, error } = await supabase.functions.invoke('send-messages', {
         body: {
           clients: [clientData],
-          message: processedMessage,
-          image: imageBase64,
+          message: processedMessage || undefined,
+          image: imageBase64 || undefined,
           campaignName: campaignId || `Envio individual - ${new Date().toLocaleString('pt-BR')}`
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
 
       if (data?.success) {
         setSendingStatus(prev => ({ ...prev, [phone]: "success" }));

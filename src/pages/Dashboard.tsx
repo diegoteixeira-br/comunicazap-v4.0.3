@@ -47,10 +47,13 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (user) {
-      fetchUserProfile();
-      fetchWhatsAppInstance();
-      fetchCampaigns();
-      checkSubscription();
+      // Executar todas as buscas em paralelo para melhor performance
+      Promise.all([
+        fetchUserProfile(),
+        fetchWhatsAppInstance(),
+        fetchCampaigns(),
+        checkSubscription()
+      ]);
       
       const channel = supabase
         .channel('whatsapp-instance-changes')
@@ -86,17 +89,25 @@ const Dashboard = () => {
   };
 
   const fetchWhatsAppInstance = async () => {
-    const { data } = await supabase
-      .from('whatsapp_instances')
-      .select('*')
-      .eq('user_id', user?.id)
-      .maybeSingle();
-    
-    setWhatsappInstance(data);
-    setLoading(false);
+    try {
+      const { data, error } = await supabase
+        .from('whatsapp_instances')
+        .select('*')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+      
+      if (error) throw error;
+      setWhatsappInstance(data);
+    } catch (error) {
+      console.error('Error fetching instance:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const refreshInstanceStatus = async () => {
+    if (refreshing) return; // Prevenir múltiplas chamadas simultâneas
+    
     setRefreshing(true);
     try {
       const { data, error } = await supabase.functions.invoke('check-instance-status', {
@@ -105,7 +116,7 @@ const Dashboard = () => {
 
       if (error) throw error;
 
-      if (data.success) {
+      if (data?.success) {
         setWhatsappInstance(data.instance);
         toast({
           title: "Status atualizado",
@@ -113,12 +124,14 @@ const Dashboard = () => {
             ? `WhatsApp conectado: ${data.phoneNumber}` 
             : 'WhatsApp desconectado',
         });
+      } else {
+        throw new Error(data?.error || 'Failed to check status');
       }
     } catch (error: any) {
       console.error('Refresh error:', error);
       toast({
         title: "Erro ao atualizar",
-        description: error.message,
+        description: error.message || 'Não foi possível atualizar o status',
         variant: "destructive",
       });
     } finally {
@@ -127,21 +140,27 @@ const Dashboard = () => {
   };
 
   const fetchCampaigns = async () => {
-    const { data } = await supabase
-      .from('message_campaigns')
-      .select('*')
-      .eq('user_id', user?.id)
-      .order('created_at', { ascending: false });
-    
-    if (data) {
-      setCampaigns(data);
-      const totalSent = data.reduce((acc, c) => acc + c.sent_count, 0);
-      const totalFailed = data.reduce((acc, c) => acc + c.failed_count, 0);
-      setStats({
-        total: data.length,
-        sent: totalSent,
-        failed: totalFailed,
-      });
+    try {
+      const { data, error } = await supabase
+        .from('message_campaigns')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      if (data) {
+        setCampaigns(data);
+        const totalSent = data.reduce((acc, c) => acc + c.sent_count, 0);
+        const totalFailed = data.reduce((acc, c) => acc + c.failed_count, 0);
+        setStats({
+          total: data.length,
+          sent: totalSent,
+          failed: totalFailed,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching campaigns:', error);
     }
   };
 

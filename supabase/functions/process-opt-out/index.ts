@@ -30,7 +30,7 @@ serve(async (req) => {
       .from('whatsapp_instances')
       .select('user_id')
       .eq('instance_name', instanceName)
-      .single();
+      .maybeSingle();
 
     if (instanceError || !instance) {
       console.error('Instance not found:', instanceError);
@@ -70,9 +70,7 @@ serve(async (req) => {
           user_id: instance.user_id,
           phone_number: sender,
           reason: `Opt-out via message: "${message}"`
-        })
-        .select()
-        .single();
+        });
 
       if (insertError) {
         // Se for erro de constraint UNIQUE, ignorar (já existe)

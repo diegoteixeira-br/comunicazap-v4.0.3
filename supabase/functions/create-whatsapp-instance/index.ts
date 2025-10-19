@@ -32,7 +32,7 @@ serve(async (req) => {
       .from('whatsapp_instances')
       .select('*')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (existingInstance && existingInstance.status === 'connected') {
       // If API key is missing for a connected instance, warn so the user can refresh it later
@@ -49,8 +49,12 @@ serve(async (req) => {
       );
     }
 
-    const evolutionApiUrl = Deno.env.get('EVOLUTION_API_URL') ?? '';
-    const evolutionApiKey = Deno.env.get('EVOLUTION_API_KEY') ?? '';
+    const evolutionApiUrl = Deno.env.get('EVOLUTION_API_URL');
+    const evolutionApiKey = Deno.env.get('EVOLUTION_API_KEY');
+    
+    if (!evolutionApiUrl || !evolutionApiKey) {
+      throw new Error('Evolution API configuration missing');
+    }
     
     const instanceName = `user-${user.id.substring(0, 8)}-${Date.now()}`;
 
