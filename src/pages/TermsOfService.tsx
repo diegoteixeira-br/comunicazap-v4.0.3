@@ -2,10 +2,8 @@ import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Footer } from "@/components/Footer";
-
 const TermsOfService = () => {
-  return (
-    <div className="min-h-screen flex flex-col">
+  return <div className="min-h-screen flex flex-col">
       <div className="container mx-auto px-4 py-8 flex-1">
         <Link to="/">
           <Button variant="ghost" className="mb-6">
@@ -129,14 +127,12 @@ const TermsOfService = () => {
             <p>Para questões relacionadas a estes Termos de Serviço, entre em contato:</p>
             <ul>
               <li>E-mail: contato@dtsolucoesdigital.com.br</li>
-              <li>Telefone: [Telefone de Suporte]</li>
+              
             </ul>
           </section>
         </article>
       </div>
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default TermsOfService;
