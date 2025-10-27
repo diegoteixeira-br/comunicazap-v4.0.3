@@ -17,6 +17,7 @@ import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import RefundPolicy from "./pages/RefundPolicy";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { SubscriptionGate } from "./components/SubscriptionGate";
 
 const queryClient = new QueryClient();
 
@@ -31,9 +32,9 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/connect-whatsapp" element={<ProtectedRoute><ConnectWhatsApp /></ProtectedRoute>} />
-          <Route path="/select-import-method" element={<ProtectedRoute><SelectImportMethod /></ProtectedRoute>} />
-          <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
-          <Route path="/results" element={<ProtectedRoute><Results /></ProtectedRoute>} />
+          <Route path="/select-import-method" element={<ProtectedRoute><SubscriptionGate><SelectImportMethod /></SubscriptionGate></ProtectedRoute>} />
+          <Route path="/upload" element={<ProtectedRoute><SubscriptionGate><Upload /></SubscriptionGate></ProtectedRoute>} />
+          <Route path="/results" element={<ProtectedRoute><SubscriptionGate><Results /></SubscriptionGate></ProtectedRoute>} />
           <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
           <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
           <Route path="/terms" element={<TermsOfService />} />
