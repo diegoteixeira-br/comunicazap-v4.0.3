@@ -1,54 +1,14 @@
 # Configuração do n8n para Integração com Evolution API
 
-## ⚠️ IMPORTANTE: Configuração de Tamanho de Upload
+## ✅ Sistema Otimizado com Storage
 
-### Aumentar Limite de Payload no Servidor
+O sistema agora **salva automaticamente** as imagens/vídeos no Supabase Storage e envia apenas a URL pública para o n8n. Isso resolve problemas de tamanho de payload e melhora a performance!
 
-Como o sistema envia imagens e vídeos em base64, que podem chegar a 20MB ou mais, é **OBRIGATÓRIO** aumentar o limite de tamanho de requisição no servidor onde o Evolution API está rodando.
-
-#### Se usar Nginx:
-
-Edite o arquivo de configuração (geralmente `/etc/nginx/nginx.conf` ou `/etc/nginx/sites-available/seu-site`):
-
-```nginx
-http {
-    # Adicione esta linha dentro do bloco http ou server
-    client_max_body_size 50M;
-}
-```
-
-Depois reinicie o Nginx:
-```bash
-sudo systemctl restart nginx
-```
-
-#### Se usar Apache:
-
-Edite o arquivo `.htaccess` ou `httpd.conf`:
-
-```apache
-# Adicione estas linhas
-LimitRequestBody 52428800
-# 52428800 bytes = 50MB
-```
-
-Depois reinicie o Apache:
-```bash
-sudo systemctl restart apache2
-```
-
-#### Se usar Docker com Evolution API:
-
-Adicione ao `docker-compose.yml`:
-
-```yaml
-services:
-  evolution:
-    environment:
-      - BODY_LIMIT=50mb
-```
-
-**Sem essa configuração, o servidor rejeitará uploads de imagens/vídeos maiores!**
+**Benefícios:**
+- ✨ Sem limites de tamanho no webhook
+- ⚡ Envios mais rápidos  
+- 💾 Arquivos armazenados de forma organizada
+- 🔒 URLs públicas seguras
 
 ---
 
@@ -66,31 +26,32 @@ O sistema envia o seguinte JSON para o webhook do n8n:
 }
 ```
 
-**Com Imagem ou Vídeo:**
+**Com Imagem ou Vídeo (NOVO FORMATO):**
 ```json
 {
   "instanceName": "user-82af4c91-1760496491812",
   "api_key": "EDA20E00-0647-4F30-B239-0D9B5C7FC193",
   "number": "556599999999",
   "text": "Olá João, sua mensagem aqui",
-  "image": "data:image/jpeg;base64,/9j/4AAQSkZJRg..." (base64 completo)
+  "mediaUrl": "https://pxzvpnshhulrsjbeqqhn.supabase.co/storage/v1/object/public/campaign-media/..."
 }
 ```
 
 **IMPORTANTE:** 
+- ✅ **Novo:** Agora o sistema envia a **URL pública** do arquivo em vez de base64!
 - O sistema suporta variações de mensagem! O campo `text` já vem personalizado.
-- O sistema suporta imagens e vídeos até 20MB
-- Quando há mídia, o campo `image` contém o arquivo em base64 (formato: `data:image/jpeg;base64,...` ou `data:video/mp4;base64,...`)
+- O sistema suporta imagens e vídeos até 50MB
+- Quando há mídia, o campo `mediaUrl` contém a URL pública do arquivo no Supabase Storage
 - Para envios com mídia, você precisa usar o endpoint `/message/sendMedia/` ao invés de `/message/sendText/`
 
 ## Configuração do HTTP Request no n8n
 
 ### ⚠️ RECOMENDADO: Use um Nó IF para separar Texto e Mídia
 
-O ideal é criar um workflow com um nó IF que verifica se há imagem/vídeo:
+O ideal é criar um workflow com um nó IF que verifica se há mídia:
 
 1. **Webhook** (recebe o payload)
-2. **IF** (verifica se `{{ $json.body.image }}` existe)
+2. **IF** (verifica se `{{ $json.body.mediaUrl }}` existe)
    - Se SIM → vai para "HTTP Request - Enviar Mídia"
    - Se NÃO → vai para "HTTP Request - Enviar Texto"
 
@@ -145,22 +106,22 @@ http://evolution:8080/message/sendMedia/{{ $json.body.instanceName }}
 
 #### 5. Body (JSON)
 
-**IMPORTANTE: Extrair apenas o base64 puro da imagem!**
+**NOVO FORMATO - Agora usa URL direta do arquivo:**
 
 ```json
 {
   "number": "{{ $json.body.number }}",
   "mediatype": "image",
-  "media": "{{ $json.body.image.split(',')[1] }}",
+  "media": "{{ $json.body.mediaUrl }}",
   "caption": "{{ $json.body.text }}"
 }
 ```
 
 **Explicação:**
 - `mediatype`: Pode ser `"image"` ou `"video"` (use `"image"` que funciona para ambos)
-- `media`: Base64 PURO (sem o prefixo `data:image/jpeg;base64,`)
+- `media`: Agora recebe diretamente a **URL pública** do arquivo
 - `caption`: O texto da mensagem
-- `$json.body.image.split(',')[1]`: Remove o prefixo do base64
+- ✅ **Vantagem:** Sem problemas de tamanho de payload!
 
 #### 6. Options
 - Body Content Type: **application/json**
@@ -174,8 +135,8 @@ Se você não quiser usar o nó IF, configure apenas um HTTP Request que sempre 
 ```json
 {
   "number": "{{ $json.body.number }}",
-  "mediatype": "{{ $json.body.image ? 'image' : undefined }}",
-  "media": "{{ $json.body.image ? $json.body.image.split(',')[1] : undefined }}",
+  "mediatype": "{{ $json.body.mediaUrl ? 'image' : undefined }}",
+  "media": "{{ $json.body.mediaUrl ? $json.body.mediaUrl : undefined }}",
   "caption": "{{ $json.body.text }}"
 }
 ```
@@ -220,14 +181,14 @@ Após configurar, teste com o seguinte payload de exemplo:
 
 ## Troubleshooting
 
-### Erro 413 "Payload Too Large" ou Erro 400 com imagens/vídeos
+### Erro ao fazer upload de mídia
 
-Isso acontece quando o servidor rejeita o upload devido ao tamanho:
+**Problema:** Falha ao salvar arquivo no Supabase Storage
 
-1. **CAUSA**: O limite de payload do servidor (Nginx/Apache) está muito baixo
-2. **SOLUÇÃO**: Aumente o `client_max_body_size` (Nginx) ou `LimitRequestBody` (Apache) para pelo menos 50MB
-3. Veja as instruções completas na seção "Configuração de Tamanho de Upload" no topo deste documento
-4. **IMPORTANTE**: Reinicie o servidor após a mudança!
+**Solução:** 
+1. Verifique se o bucket "campaign-media" existe no Supabase
+2. Confirme que o bucket está configurado como público
+3. Verifique os logs da edge function para mais detalhes
 
 ### Erro 400 "Bad Request - instance requires property 'text'"
 

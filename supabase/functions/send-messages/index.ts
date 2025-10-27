@@ -141,6 +141,61 @@ serve(async (req) => {
       throw new Error('Instance API key missing. Please reconnect your WhatsApp.');
     }
 
+    // Upload image to Supabase Storage if provided
+    let mediaUrl: string | null = null;
+    if (image) {
+      try {
+        console.log('Uploading media to Supabase Storage...');
+        
+        // Extract base64 data and mime type
+        const matches = image.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+        if (!matches || matches.length !== 3) {
+          throw new Error('Invalid image format');
+        }
+        
+        const mimeType = matches[1];
+        const base64Data = matches[2];
+        
+        // Convert base64 to binary
+        const binaryString = atob(base64Data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        
+        // Generate unique filename
+        const extension = mimeType.split('/')[1];
+        const fileName = `${user.id}/${campaign.id}.${extension}`;
+        
+        // Upload to Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabaseClient
+          .storage
+          .from('campaign-media')
+          .upload(fileName, bytes, {
+            contentType: mimeType,
+            upsert: false
+          });
+        
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          throw uploadError;
+        }
+        
+        // Get public URL
+        const { data: { publicUrl } } = supabaseClient
+          .storage
+          .from('campaign-media')
+          .getPublicUrl(fileName);
+        
+        mediaUrl = publicUrl;
+        console.log('Media uploaded successfully:', mediaUrl);
+        
+      } catch (uploadError: any) {
+        console.error('Failed to upload media:', uploadError);
+        throw new Error(`Failed to upload media: ${uploadError.message}`);
+      }
+    }
+
     const results = [];
 
     // Enviar mensagens sequencialmente com delay
@@ -198,7 +253,7 @@ serve(async (req) => {
             campaign_id: campaign.id,
             client_name: client["Nome do Cliente"],
             client_phone: client["Telefone do Cliente"],
-            message: personalizedMessage || (image ? '[Imagem]' : ''),
+            message: personalizedMessage || (mediaUrl ? `[Mídia: ${mediaUrl}]` : ''),
             message_variation_index: variationIndex,
             status: 'pending'
           })
@@ -216,9 +271,9 @@ serve(async (req) => {
           payload.text = personalizedMessage;
         }
 
-        // Adicionar imagem se existir
-        if (image) {
-          payload.image = image;
+        // Adicionar URL da mídia se existir
+        if (mediaUrl) {
+          payload.mediaUrl = mediaUrl;
         }
 
         const response = await fetch(n8nWebhookUrl, {
