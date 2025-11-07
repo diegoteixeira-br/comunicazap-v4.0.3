@@ -12,6 +12,7 @@ import Upload from "./pages/Upload";
 import Results from "./pages/Results";
 import History from "./pages/History";
 import Contacts from "./pages/Contacts";
+import Subscription from "./pages/Subscription";
 import NotFound from "./pages/NotFound";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -37,6 +38,7 @@ const App = () => (
           <Route path="/results" element={<ProtectedRoute><SubscriptionGate><Results /></SubscriptionGate></ProtectedRoute>} />
           <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
           <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
+          <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/refund-policy" element={<RefundPolicy />} />

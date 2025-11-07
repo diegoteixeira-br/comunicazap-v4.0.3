@@ -687,21 +687,11 @@ const Dashboard = () => {
                   ) : subscriptionStatus?.subscribed ? (
                     <Button 
                       variant="outline" 
-                      onClick={handleManageSubscription}
-                      disabled={openingPortal}
+                      onClick={() => navigate('/subscription')}
                       className="w-full"
                     >
-                      {openingPortal ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Abrindo...
-                        </>
-                      ) : (
-                        <>
-                          <CreditCard className="mr-2 h-4 w-4" />
-                          Gerenciar Assinatura
-                        </>
-                      )}
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Gerenciar Assinatura
                     </Button>
                   ) : !subscriptionStatus?.trial_active ? (
                     <Button 
@@ -709,7 +699,7 @@ const Dashboard = () => {
                       className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90"
                     >
                       <Crown className="mr-2 h-4 w-4" />
-                      Assinar Agora - R$ 59,90/mês
+                      Assinar Agora - R$ 98,50/mês
                     </Button>
                   ) : (
                     <Button 
