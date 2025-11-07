@@ -236,7 +236,7 @@ const Index = () => {
                   <Clock className="h-4 w-4" />7 DIAS GRÁTIS
                 </div>
                 <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg animate-pulse">
-                  30% OFF
+                  50% OFF
                 </div>
               </div>
               <CardHeader className="pb-4 pt-16">
@@ -248,10 +248,10 @@ const Index = () => {
                     </div>
                   </div>
                   <div className="flex items-center justify-center gap-3 mb-2">
-                    <span className="text-2xl text-muted-foreground line-through">De R$ 85,57</span>
+                    <span className="text-2xl text-muted-foreground line-through">De R$ 197,00</span>
                   </div>
                   <div className="text-4xl font-bold text-primary mb-2">
-                    Por R$ 59,90<span className="text-lg text-muted-foreground">/mês</span>
+                    Por R$ 98,50<span className="text-lg text-muted-foreground">/mês</span>
                   </div>
                   <p className="text-sm text-muted-foreground">Cancele quando quiser, sem complicações</p>
                 </div>
