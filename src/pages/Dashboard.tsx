@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { MessageSquare, History, Phone, Power, Loader2, RefreshCw, Unplug, CreditCard, Crown, Clock, Zap, AlertCircle, Send, XCircle, Eye, EyeOff, Users } from 'lucide-react';
 import { ImportContactsModal } from '@/components/ImportContactsModal';
+import { UsageStats } from '@/components/UsageStats';
 import { toast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -425,6 +426,17 @@ const Dashboard = () => {
           </div>
         ) : (
           <div className="space-y-6 sm:space-y-8">
+            {/* Dashboard de Estatísticas para Assinantes */}
+            {subscription.has_access && subscription.subscribed && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Crown className="h-5 w-5 text-yellow-500" />
+                  <h2 className="text-xl font-semibold">Estatísticas de Uso</h2>
+                </div>
+                <UsageStats userId={user?.id || ''} />
+              </div>
+            )}
+
             {/* Stats Cards - Topo */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <Card className="border-primary/20 hover:border-primary/40 transition-colors">
