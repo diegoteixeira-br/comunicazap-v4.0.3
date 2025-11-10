@@ -471,43 +471,7 @@ const Dashboard = () => {
             </div>
 
             {/* Action Cards - Meio */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {/* Card de Assinatura */}
-              <Card 
-                className="cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5"
-                onClick={() => navigate('/subscription')}
-              >
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-3 text-2xl">
-                      <div className="p-3 rounded-lg bg-primary/10">
-                        <Crown className="h-6 w-6 text-primary" />
-                      </div>
-                      Assinatura
-                    </CardTitle>
-                  </div>
-                  <CardDescription className="mt-2">
-                    {subscription.subscribed 
-                      ? 'Plano Premium Ativo'
-                      : subscription.trial_active 
-                        ? `Teste Grátis - ${subscription.trial_days_left} dias` 
-                        : 'Assine para desbloquear'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button 
-                    variant="outline" 
-                    className="w-full gap-2"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate('/subscription');
-                    }}
-                  >
-                    <CreditCard className="h-4 w-4" />
-                    Gerenciar
-                  </Button>
-                </CardContent>
-              </Card>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
               <Card 
                 className={`cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 border-2 ${
                   subscription.has_access 

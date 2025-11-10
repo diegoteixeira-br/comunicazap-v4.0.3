@@ -107,7 +107,7 @@ export const SubscriptionGate = ({ children }: SubscriptionGateProps) => {
               ) : (
                 <>
                   <Crown className="mr-2 h-5 w-5" />
-                  Assinar Agora - R$ 98,50/mês
+                  Assinar Agora - R$ 59,90/mês
                 </>
               )}
             </Button>
