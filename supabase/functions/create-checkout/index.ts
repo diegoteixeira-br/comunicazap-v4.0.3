@@ -48,7 +48,7 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "https://pxzvpnshhulrsjbeqqhn.supabase.co";
     
-    const priceId = "price_1SRze1PFVcRfSdEae5xO8zo4";
+    const priceId = "price_1SRzrKPFVcRfSdEa6X7WSrTV";
     console.log("[CREATE-CHECKOUT] Creating checkout session with price:", priceId);
     
     const session = await stripe.checkout.sessions.create({
