@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import logo from "@/assets/comunicazap-logo.png";
 import { Footer } from "@/components/Footer";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -99,15 +100,18 @@ const Index = () => {
               </span>
             </div>
 
-            {/* Botão Login */}
-            <Button
-              onClick={() => navigate("/auth")}
-              variant="default"
-              className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-all hover:scale-105"
-            >
-              <LogIn className="h-4 w-4" />
-              <span className="hidden sm:inline">Entrar</span>
-            </Button>
+            {/* Botões de ação */}
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button
+                onClick={() => navigate("/auth")}
+                variant="default"
+                className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-all hover:scale-105"
+              >
+                <LogIn className="h-4 w-4" />
+                <span className="hidden sm:inline">Entrar</span>
+              </Button>
+            </div>
           </div>
         </div>
       </header>

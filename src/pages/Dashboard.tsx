@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { MessageSquare, History, Phone, Power, Loader2, RefreshCw, Unplug, CreditCard, Crown, Clock, Zap, AlertCircle, Send, XCircle, Eye, EyeOff, Users } from 'lucide-react';
 import { ImportContactsModal } from '@/components/ImportContactsModal';
 import { UsageStats } from '@/components/UsageStats';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { toast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -440,10 +441,13 @@ const Dashboard = () => {
               </button>
             </div>
           </div>
-          <Button variant="outline" onClick={handleSignOut} className="gap-2 w-full sm:w-auto">
-            <Power className="h-4 w-4" />
-            <span className="sm:inline">Sair</span>
-          </Button>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <ThemeToggle />
+            <Button variant="outline" onClick={handleSignOut} className="gap-2 flex-1 sm:flex-initial">
+              <Power className="h-4 w-4" />
+              <span className="sm:inline">Sair</span>
+            </Button>
+          </div>
         </div>
 
         {loading ? (
