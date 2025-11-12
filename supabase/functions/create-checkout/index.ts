@@ -58,7 +58,7 @@ serve(async (req) => {
 
     console.log('[CREATE-CHECKOUT] Using price_id:', price_id);
 
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY") || "";
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY_NOVA") || "";
     console.log(`[CREATE-CHECKOUT] Using Stripe key suffix: ${stripeKey ? stripeKey.slice(-6) : 'MISSING'}`);
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
