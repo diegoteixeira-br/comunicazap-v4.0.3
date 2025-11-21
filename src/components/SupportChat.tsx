@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -13,16 +14,19 @@ interface Message {
 
 export const SupportChat = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'assistant',
-      content: 'Olá! Sou o assistente do ComunicaZap. Como posso ajudar você hoje?'
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Carregar histórico quando o chat abre
+  useEffect(() => {
+    if (isOpen && !historyLoaded) {
+      loadChatHistory();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -30,17 +34,59 @@ export const SupportChat = () => {
     }
   }, [messages]);
 
+  const loadChatHistory = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('support_chat_messages')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true })
+        .limit(50);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        setMessages(data.map(msg => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content
+        })));
+      } else {
+        // Mensagem inicial se não houver histórico
+        setMessages([{
+          role: 'assistant',
+          content: 'Olá! Sou o assistente do ComunicaZap. Como posso ajudar você hoje?'
+        }]);
+      }
+      setHistoryLoaded(true);
+    } catch (error) {
+      console.error('Erro ao carregar histórico:', error);
+      setMessages([{
+        role: 'assistant',
+        content: 'Olá! Sou o assistente do ComunicaZap. Como posso ajudar você hoje?'
+      }]);
+      setHistoryLoaded(true);
+    }
+  };
+
   const streamChat = async (userMessage: Message) => {
     const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/support-chat`;
     
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const resp = await fetch(CHAT_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages: [...messages, userMessage] }),
+        body: JSON.stringify({ 
+          messages: [...messages, userMessage],
+          userId: user?.id 
+        }),
       });
 
       if (resp.status === 429) {

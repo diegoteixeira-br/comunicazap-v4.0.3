@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,7 +10,12 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages } = await req.json();
+    const { messages, userId } = await req.json();
+    
+    // Inicializar Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY não configurada");
@@ -78,7 +84,61 @@ Responda de forma clara, objetiva e amigável. Forneça exemplos práticos quand
       });
     }
 
-    return new Response(response.body, {
+    // Salvar mensagem do usuário
+    const userMessage = messages[messages.length - 1];
+    if (userId && userMessage.role === 'user') {
+      await supabase.from('support_chat_messages').insert({
+        user_id: userId,
+        role: 'user',
+        content: userMessage.content
+      });
+    }
+
+    // Criar uma stream que também salva a resposta do assistente
+    const reader = response.body?.getReader();
+    let assistantContent = '';
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          while (true) {
+            const { done, value } = await reader!.read();
+            if (done) {
+              // Salvar mensagem do assistente quando terminar
+              if (userId && assistantContent) {
+                await supabase.from('support_chat_messages').insert({
+                  user_id: userId,
+                  role: 'assistant',
+                  content: assistantContent
+                });
+              }
+              controller.close();
+              break;
+            }
+
+            // Extrair conteúdo para salvar depois
+            const text = new TextDecoder().decode(value);
+            const lines = text.split('\n');
+            for (const line of lines) {
+              if (line.startsWith('data: ') && !line.includes('[DONE]')) {
+                try {
+                  const json = JSON.parse(line.slice(6));
+                  const content = json.choices?.[0]?.delta?.content;
+                  if (content) assistantContent += content;
+                } catch {}
+              }
+            }
+
+            controller.enqueue(value);
+          }
+        } catch (error) {
+          console.error('Stream error:', error);
+          controller.error(error);
+        }
+      }
+    });
+
+    return new Response(stream, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (e) {
