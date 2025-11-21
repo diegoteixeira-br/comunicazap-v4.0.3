@@ -6,7 +6,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, History, Phone, Power, Loader2, RefreshCw, Unplug, CreditCard, Crown, Clock, Zap, AlertCircle, Send, XCircle, Eye, EyeOff, Users, Shield } from 'lucide-react';
+import { MessageSquare, History, Phone, Power, Loader2, RefreshCw, Unplug, CreditCard, Crown, Clock, Zap, AlertCircle, Send, XCircle, Eye, EyeOff, Users, Shield, FileText } from 'lucide-react';
 import { ImportContactsModal } from '@/components/ImportContactsModal';
 import { UsageStats } from '@/components/UsageStats';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -531,6 +531,49 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Admin Quick Actions - Admin somente */}
+            {isAdmin && (
+              <div className="mb-4">
+                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-red-500" />
+                  Administração
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Link to="/admin/support">
+                    <Card className="cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 border-2 border-red-500/30 bg-gradient-to-br from-red-500/5 to-orange-500/5 h-full">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-3 text-xl">
+                          <div className="p-3 rounded-lg bg-red-500/10">
+                            <Shield className="h-5 w-5 text-red-500" />
+                          </div>
+                          Suporte
+                        </CardTitle>
+                        <CardDescription className="text-base mt-2">
+                          Ver conversas de suporte dos usuários
+                        </CardDescription>
+                      </CardHeader>
+                    </Card>
+                  </Link>
+
+                  <Link to="/admin/audit-log">
+                    <Card className="cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 border-2 border-purple-500/30 bg-gradient-to-br from-purple-500/5 to-pink-500/5 h-full">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-3 text-xl">
+                          <div className="p-3 rounded-lg bg-purple-500/10">
+                            <FileText className="h-5 w-5 text-purple-500" />
+                          </div>
+                          Auditoria
+                        </CardTitle>
+                        <CardDescription className="text-base mt-2">
+                          Log de ações administrativas
+                        </CardDescription>
+                      </CardHeader>
+                    </Card>
+                  </Link>
+                </div>
+              </div>
+            )}
 
             {/* Action Cards - Meio */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
