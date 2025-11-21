@@ -192,13 +192,18 @@ export const SupportChat = () => {
     <>
       {/* Floating Button */}
       {!isOpen && (
-        <Button
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:scale-110 transition-transform z-50"
-          size="icon"
-        >
-          <MessageCircle className="h-6 w-6" />
-        </Button>
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-center gap-2">
+          <Button
+            onClick={() => setIsOpen(true)}
+            className="h-14 w-14 rounded-full shadow-lg hover:scale-110 transition-transform"
+            size="icon"
+          >
+            <MessageCircle className="h-6 w-6" />
+          </Button>
+          <span className="text-xs font-medium text-foreground bg-background/80 backdrop-blur-sm px-3 py-1 rounded-full shadow-md whitespace-nowrap">
+            Chat de Suporte
+          </span>
+        </div>
       )}
 
       {/* Chat Window */}
