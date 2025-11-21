@@ -37,7 +37,19 @@ export default function AdminSupport() {
   useEffect(() => {
     checkAdminAccess();
     loadAllConversations();
+    logAccess();
   }, []);
+
+  const logAccess = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    await supabase.from('admin_action_logs').insert({
+      admin_user_id: user.id,
+      action_type: 'view_support_chat',
+      details: { timestamp: new Date().toISOString() }
+    });
+  };
 
   const checkAdminAccess = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -155,8 +167,23 @@ export default function AdminSupport() {
                 <div className="p-2">
                   {conversations.map((conv) => (
                     <button
-                      key={conv.userId}
-                      onClick={() => setSelectedConversation(conv.userId)}
+                     key={conv.userId}
+                      onClick={async () => {
+                        setSelectedConversation(conv.userId);
+                        // Log quando admin visualiza conversa específica
+                        const { data: { user } } = await supabase.auth.getUser();
+                        if (user) {
+                          await supabase.from('admin_action_logs').insert({
+                            admin_user_id: user.id,
+                            action_type: 'view_support_chat',
+                            target_user_id: conv.userId,
+                            details: { 
+                              user_email: conv.userEmail,
+                              messages_count: conv.messages.length 
+                            }
+                          });
+                        }
+                      }}
                       className={`w-full p-4 rounded-lg mb-2 text-left transition-colors ${
                         selectedConversation === conv.userId
                           ? 'bg-primary text-primary-foreground'
