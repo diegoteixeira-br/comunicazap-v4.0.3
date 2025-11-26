@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/sessionClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
 import { ArrowLeft, Loader2, CheckCircle, Clock, AlertCircle, RefreshCw } from 'lucide-react';
 
@@ -13,6 +14,7 @@ const ConnectWhatsApp = () => {
   const [connected, setConnected] = useState(false);
   const [timeLeft, setTimeLeft] = useState(45);
   const [qrExpired, setQrExpired] = useState(false);
+  const [showExitDialog, setShowExitDialog] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -156,24 +158,32 @@ const ConnectWhatsApp = () => {
     }
   };
 
-  const handleBackToDashboard = async () => {
-    // Se tem QR Code mas não está conectado, deletar a instância
+  const handleBackClick = () => {
+    // Se tem QR Code e não está conectado, pedir confirmação
     if (qrCode && !connected) {
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (sessionData.session) {
-          await supabase.functions.invoke('delete-whatsapp-instance', {
-            body: {},
-            headers: {
-              Authorization: `Bearer ${sessionData.session.access_token}`,
-            },
-          });
-          console.log('Instância deletada ao voltar');
-        }
-      } catch (error) {
-        console.warn('Erro ao deletar instância:', error);
-        // Continua navegando mesmo se falhar
+      setShowExitDialog(true);
+    } else {
+      // Se não tem QR Code ou já está conectado, volta direto
+      navigate('/dashboard');
+    }
+  };
+
+  const handleConfirmExit = async () => {
+    setShowExitDialog(false);
+    // Deletar a instância
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session) {
+        await supabase.functions.invoke('delete-whatsapp-instance', {
+          body: {},
+          headers: {
+            Authorization: `Bearer ${sessionData.session.access_token}`,
+          },
+        });
+        console.log('Instância deletada ao voltar');
       }
+    } catch (error) {
+      console.warn('Erro ao deletar instância:', error);
     }
     navigate('/dashboard');
   };
@@ -190,7 +200,7 @@ const ConnectWhatsApp = () => {
       <div className="max-w-2xl mx-auto">
         <Button
           variant="ghost"
-          onClick={handleBackToDashboard}
+          onClick={handleBackClick}
           className="mb-4"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -297,6 +307,23 @@ const ConnectWhatsApp = () => {
             </CardContent>
           </Card>
       </div>
+
+      <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar conexão do WhatsApp?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você ainda não conectou seu WhatsApp. Se voltar agora, o QR Code será cancelado e você precisará gerar um novo código para conectar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Continuar conectando</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmExit}>
+              Sim, voltar ao Dashboard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
