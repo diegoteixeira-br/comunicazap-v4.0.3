@@ -96,6 +96,28 @@ serve(async (req) => {
       campaignName 
     });
 
+    // Check daily limit
+    const { data: limitData, error: limitError } = await supabaseClient.rpc('get_daily_limit', {
+      p_user_id: user.id
+    });
+
+    if (limitError) {
+      console.error('Error checking daily limit:', limitError);
+    }
+
+    const dailyLimit = limitData && limitData.length > 0 ? limitData[0] : { remaining: 50, limit_value: 50 };
+    
+    if (dailyLimit.remaining <= 0) {
+      throw new Error(`Limite diário atingido. Você já enviou ${dailyLimit.limit_value} mensagens hoje. Aguarde até amanhã.`);
+    }
+
+    // Limit clients to remaining daily quota
+    const actualClientsToSend = clients.slice(0, dailyLimit.remaining);
+    
+    if (clients.length > dailyLimit.remaining) {
+      console.log(`Daily limit: sending only ${dailyLimit.remaining} of ${clients.length} contacts`);
+    }
+
     const { data: instance, error: instanceError } = await supabaseClient
       .from('whatsapp_instances')
       .select('*')
@@ -116,7 +138,7 @@ serve(async (req) => {
         user_id: user.id,
         instance_id: instance.id,
         campaign_name: campaignName || `Campaign ${new Date().toISOString()}`,
-        total_contacts: clients.length,
+        total_contacts: actualClientsToSend.length,
         message_variations: variations,
         target_tags: targetTags || [],
         status: 'in_progress'
@@ -200,8 +222,8 @@ serve(async (req) => {
     const results = [];
 
     // Enviar mensagens sequencialmente com delay
-    for (let i = 0; i < clients.length; i++) {
-      const client = clients[i];
+    for (let i = 0; i < actualClientsToSend.length; i++) {
+      const client = actualClientsToSend[i];
       
       try {
         // Check contact status in contacts table
@@ -302,7 +324,7 @@ serve(async (req) => {
           });
 
           results.push({ success: true, client: client["Nome do Cliente"] });
-          console.log(`Message sent successfully to ${client["Nome do Cliente"]} (${i + 1}/${clients.length})`);
+          console.log(`Message sent successfully to ${client["Nome do Cliente"]} (${i + 1}/${actualClientsToSend.length})`);
         } else {
           throw new Error(`HTTP ${response.status}`);
         }
@@ -327,9 +349,18 @@ serve(async (req) => {
       }
 
       // Aguardar 1 segundo antes do próximo envio (exceto no último)
-      if (i < clients.length - 1) {
+      if (i < actualClientsToSend.length - 1) {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
+    }
+
+    // Update daily limit
+    const successCount = results.filter(r => r.success).length;
+    if (successCount > 0) {
+      await supabaseClient.rpc('increment_daily_sent', {
+        p_user_id: user.id,
+        p_count: successCount
+      });
     }
 
     await supabaseClient
@@ -340,7 +371,6 @@ serve(async (req) => {
       })
       .eq('id', campaign.id);
 
-    const successCount = results.filter(r => r.success).length;
     const failedCount = results.filter(r => !r.success).length;
 
     console.log('Campaign completed:', { successCount, failedCount });
@@ -350,7 +380,7 @@ serve(async (req) => {
         success: true,
         campaign: campaign.id,
         results: {
-          total: clients.length,
+          total: actualClientsToSend.length,
           sent: successCount,
           failed: failedCount
         }
