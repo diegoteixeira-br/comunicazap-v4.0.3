@@ -286,7 +286,7 @@ const Subscription = () => {
                           </li>
                           <li className="flex items-center gap-2 text-sm">
                             <CheckCircle className="h-4 w-4 text-green-500" />
-                            Envio inteligente com delay de segurança
+                            Envio inteligente com delay aleatório para evitar bloqueios
                           </li>
                           <li className="flex items-center gap-2 text-sm">
                             <CheckCircle className="h-4 w-4 text-green-500" />
