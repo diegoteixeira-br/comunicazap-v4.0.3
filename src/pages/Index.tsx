@@ -149,12 +149,32 @@ const Index = () => {
           </p>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-          {features.map((feature, index) => (
+        {/* Features Grid - Linha 1 (4 cards) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          {features.slice(0, 4).map((feature, index) => (
             <Card
               key={index}
               className="border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-elevated"
+            >
+              <CardContent className="pt-6">
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <feature.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground">{feature.description}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Features Grid - Linha 2 (3 cards centralizados) */}
+        <div className="flex flex-wrap justify-center gap-6 mb-16">
+          {features.slice(4, 7).map((feature, index) => (
+            <Card
+              key={index + 4}
+              className="w-full md:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-elevated"
             >
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center">
