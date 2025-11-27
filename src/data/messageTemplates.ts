@@ -2,7 +2,7 @@ export interface MessageTemplate {
   id: string;
   title: string;
   message: string;
-  category: "saudacao" | "lembrete" | "promocao" | "agradecimento" | "opt-in" | "personalizado";
+  category: "saudacao" | "lembrete" | "promocao" | "agradecimento" | "opt-in" | "aniversario" | "personalizado";
   isCustom: boolean;
   createdAt?: string;
 }
@@ -74,6 +74,46 @@ Obrigado pela atenção! 🙏`,
     category: "agradecimento",
     isCustom: false,
   },
+  {
+    id: "aniversario-curta",
+    title: "Aniversário - Curta e Festiva",
+    message: `🎉 Parabéns, {nome}! 🎉
+
+Hoje é o seu dia de brilhar! A equipe deseja a você um feliz aniversário, repleto de alegria, sucesso e muita paz. 
+Que a vida continue te presenteando com momentos maravilhosos!
+
+Abraços,
+Equipe`,
+    category: "aniversario",
+    isCustom: false,
+  },
+  {
+    id: "aniversario-elaborada",
+    title: "Aniversário - Desejos de Sucesso",
+    message: `Olá, {nome}!
+
+Neste dia especial, queremos parar tudo para celebrar a pessoa incrível que você é. 🥳
+Desejamos que o seu novo ciclo seja de muita saúde, realizações e que você alcance todos os seus objetivos. 
+
+Feliz Aniversário!
+Com carinho,
+Equipe`,
+    category: "aniversario",
+    isCustom: false,
+  },
+  {
+    id: "aniversario-afetuosa",
+    title: "Aniversário - Mensagem Afetuosa",
+    message: `Eeei, {nome}! Hoje o dia é todinho seu! 🎈
+
+Passando para te desejar um Feliz Aniversário espetacular! Que a felicidade te encontre em cada momento e que a jornada pela frente seja cheia de luz, amor e muitas alegrias.
+
+Que a sua vida seja sempre de festa!
+Um abraço apertado,
+Equipe`,
+    category: "aniversario",
+    isCustom: false,
+  },
 ];
 
 export const getCustomTemplates = (): MessageTemplate[] => {
@@ -107,6 +147,23 @@ export const saveCustomTemplate = (template: MessageTemplate): void => {
   }
 };
 
+export const updateCustomTemplate = (template: MessageTemplate): void => {
+  try {
+    const existing = getCustomTemplates();
+    const index = existing.findIndex(t => t.id === template.id);
+    
+    if (index === -1) {
+      throw new Error("Template não encontrado");
+    }
+    
+    existing[index] = { ...template };
+    localStorage.setItem("whatsapp-custom-templates", JSON.stringify(existing));
+  } catch (error) {
+    console.error("Erro ao atualizar template:", error);
+    throw error;
+  }
+};
+
 export const deleteCustomTemplate = (templateId: string): void => {
   try {
     const existing = getCustomTemplates();
@@ -125,6 +182,7 @@ export const getCategoryIcon = (category: MessageTemplate["category"]): string =
     case "lembrete": return "📅";
     case "promocao": return "🎁";
     case "agradecimento": return "💚";
+    case "aniversario": return "🎂";
     case "personalizado": return "✏️";
     default: return "📝";
   }
@@ -137,6 +195,7 @@ export const getCategoryLabel = (category: MessageTemplate["category"]): string 
     case "lembrete": return "Lembrete";
     case "promocao": return "Promoção";
     case "agradecimento": return "Agradecimento";
+    case "aniversario": return "Aniversário";
     case "personalizado": return "Personalizado";
     default: return "Outros";
   }

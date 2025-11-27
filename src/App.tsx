@@ -22,6 +22,7 @@ import RefundPolicy from "./pages/RefundPolicy";
 import StripeDiagnostic from "./pages/StripeDiagnostic";
 import AdminSupport from "./pages/AdminSupport";
 import AdminAuditLog from "./pages/AdminAuditLog";
+import Templates from "./pages/Templates";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { SubscriptionGate } from "./components/SubscriptionGate";
 
@@ -52,6 +53,7 @@ const App = () => (
           <Route path="/stripe-diagnostic" element={<ProtectedRoute><StripeDiagnostic /></ProtectedRoute>} />
           <Route path="/admin/support" element={<ProtectedRoute><AdminSupport /></ProtectedRoute>} />
           <Route path="/admin/audit-log" element={<ProtectedRoute><AdminAuditLog /></ProtectedRoute>} />
+          <Route path="/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

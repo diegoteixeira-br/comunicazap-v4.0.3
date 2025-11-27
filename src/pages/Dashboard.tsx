@@ -576,7 +576,7 @@ const Dashboard = () => {
             )}
 
             {/* Action Cards - Meio */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               <Card 
                 className={`cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 border-2 ${
                   subscription.loading
@@ -641,6 +641,24 @@ const Dashboard = () => {
                     </div>
                     <CardDescription className="text-base mt-3">
                       Visualizar todas as campanhas anteriores
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </Link>
+
+              <Link to="/templates">
+                <Card className="cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 border-2 border-purple-500/30 bg-gradient-to-br from-purple-500/5 to-pink-500/5 h-full">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-3 text-2xl">
+                        <div className="p-3 rounded-lg bg-purple-500/10">
+                          <FileText className="h-6 w-6 text-purple-500" />
+                        </div>
+                        Templates
+                      </CardTitle>
+                    </div>
+                    <CardDescription className="text-base mt-3">
+                      Gerencie seus modelos de mensagens
                     </CardDescription>
                   </CardHeader>
                 </Card>
