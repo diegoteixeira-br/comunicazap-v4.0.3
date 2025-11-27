@@ -26,7 +26,7 @@ import {
 import { supabase } from "@/integrations/supabase/sessionClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const Results = () => {
   const navigate = useNavigate();
@@ -82,13 +82,29 @@ const Results = () => {
   };
 
   // Calcular quantidade sugerida de variações baseada no número de contatos
-  const getSuggestedVariationCount = (contactCount: number): number => {
-    if (contactCount <= 10) return 3;
+  const getMaxVariationCount = (contactCount: number): number => {
+    if (contactCount <= 10) return 1;
+    if (contactCount <= 30) return 3;
     if (contactCount <= 50) return 5;
     if (contactCount <= 100) return 7;
     if (contactCount <= 250) return 10;
     if (contactCount <= 500) return 12;
-    return 15; // 500+ contatos
+    return 15;
+  };
+
+  const getIdealVariationCount = (contactCount: number): number => {
+    if (contactCount <= 10) return 1;
+    if (contactCount <= 30) return 3;
+    if (contactCount <= 50) return 5;
+    if (contactCount <= 100) return 7;
+    if (contactCount <= 250) return 10;
+    if (contactCount <= 500) return 12;
+    return 15;
+  };
+
+  const getAvailableVariationOptions = (maxCount: number): number[] => {
+    const allOptions = [1, 3, 5, 7, 10, 12, 15];
+    return allOptions.filter(opt => opt <= maxCount);
   };
 
   // Função para alterar quantidade de variações
@@ -113,6 +129,18 @@ const Results = () => {
       setActiveVariationTab(newCount - 1);
     }
   };
+
+  // Ajustar automaticamente o variationCount quando contatos mudam
+  useEffect(() => {
+    const maxAllowed = getMaxVariationCount(clients.length);
+    const ideal = getIdealVariationCount(clients.length);
+    
+    if (variationCount > maxAllowed) {
+      handleVariationCountChange(maxAllowed);
+    } else if (variationCount === 3 && clients.length > 0 && clients.length <= 10) {
+      handleVariationCountChange(ideal);
+    }
+  }, [clients.length]);
 
   // Filtrar contatos pela busca
   const filteredClients = clients.filter(client => {
@@ -989,7 +1017,8 @@ const Results = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 overflow-x-hidden">
+    <TooltipProvider>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 overflow-x-hidden">
       {/* Best Practices Alert Dialog */}
       <AlertDialog open={showBestPractices} onOpenChange={setShowBestPractices}>
         <AlertDialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -1268,15 +1297,18 @@ const Results = () => {
                       <Send className="h-5 w-5" />
                       Mensagem Personalizada com Variações
                     </CardTitle>
-                    <CardDescription>
-                      Crie até {variationCount} variações de mensagem para parecer mais humano
-                    </CardDescription>
+            <CardDescription>
+              {variationCount === 1 
+                ? "Uma mensagem é suficiente para poucos contatos"
+                : `Crie até ${variationCount} variações de mensagem para parecer mais humano`
+              }
+            </CardDescription>
                   </div>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         onClick={handleGenerateVariations}
-                        disabled={!messageVariations[0].trim() || generatingVariations || isSending}
+                        disabled={!messageVariations[0].trim() || generatingVariations || isSending || variationCount === 1}
                         variant="default"
                         size="sm"
                         className="hidden sm:flex"
@@ -1294,29 +1326,34 @@ const Results = () => {
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Gera automaticamente as variações 2 e 3 baseadas na variação 1</p>
+                      {variationCount === 1 
+                        ? <p>Para {clients.length} contatos, 1 mensagem é suficiente</p>
+                        : <p>Gera automaticamente {variationCount - 1} variações baseadas na variação 1</p>
+                      }
                     </TooltipContent>
                   </Tooltip>
                 </div>
                 {/* Botão mobile */}
-                <Button
-                  onClick={handleGenerateVariations}
-                  disabled={!messageVariations[0].trim() || generatingVariations || isSending}
-                  variant="default"
-                  size="sm"
-                  className="w-full sm:hidden mt-3"
-                >
-                  {generatingVariations ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2"></div>
-                      Gerando Variações...
-                    </>
-                  ) : (
-                    <>
-                      ✨ Gerar Variações com IA
-                    </>
-                  )}
-                </Button>
+                {variationCount > 1 && (
+                  <Button
+                    onClick={handleGenerateVariations}
+                    disabled={!messageVariations[0].trim() || generatingVariations || isSending}
+                    variant="default"
+                    size="sm"
+                    className="w-full sm:hidden mt-3"
+                  >
+                    {generatingVariations ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2"></div>
+                        Gerando Variações...
+                      </>
+                    ) : (
+                      <>
+                        ✨ Gerar Variações com IA
+                      </>
+                    )}
+                  </Button>
+                )}
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Seletor de Quantidade de Variações */}
@@ -1326,59 +1363,89 @@ const Results = () => {
                     <Select 
                       value={variationCount.toString()} 
                       onValueChange={(v) => handleVariationCountChange(Number(v))}
-                      disabled={isSending}
+                      disabled={isSending || getMaxVariationCount(clients.length) === 1}
                     >
                       <SelectTrigger className="w-20">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {[3, 5, 7, 10, 12, 15].map(num => (
+                        {getAvailableVariationOptions(getMaxVariationCount(clients.length)).map(num => (
                           <SelectItem key={num} value={num.toString()}>{num}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   
-                  <Badge variant="outline" className="text-xs">
-                    Sugerido: {getSuggestedVariationCount(clients.length)} (para {clients.length} contatos)
-                  </Badge>
+                  {clients.length <= 10 ? (
+                    <Badge variant="secondary" className="text-xs">
+                      ✓ {clients.length} contatos não precisam de variações
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs">
+                      Máx: {getMaxVariationCount(clients.length)} variações para {clients.length} contatos
+                    </Badge>
+                  )}
                 </div>
 
-                {/* Abas de Variações */}
-                <Tabs value={activeVariationTab.toString()} onValueChange={(v) => setActiveVariationTab(Number(v))}>
-                  <div className="overflow-x-auto pb-2">
-                    <TabsList 
-                      className="grid w-full"
-                      style={{ gridTemplateColumns: `repeat(${variationCount}, minmax(0, 1fr))` }}
-                    >
-                      {Array.from({ length: variationCount }, (_, index) => (
-                        <TabsTrigger key={index} value={index.toString()} className="text-xs sm:text-sm">
-                          {index + 1}
-                          {messageVariations[index]?.trim() && " ✓"}
-                        </TabsTrigger>
-                      ))}
-                    </TabsList>
+                {/* Abas de Variações ou Textarea única */}
+                {variationCount === 1 ? (
+                  <div className="space-y-2">
+                    <Textarea
+                      placeholder="Olá {nome}, tudo bem? 😊"
+                      value={messageVariations[0] || ""}
+                      onChange={(e) => {
+                        const newVariations = [...messageVariations];
+                        newVariations[0] = e.target.value.slice(0, 1000);
+                        setMessageVariations(newVariations);
+                      }}
+                      className="min-h-[200px] resize-none"
+                      spellCheck="false"
+                      lang="pt-BR"
+                    />
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-muted-foreground">
+                        Obrigatória
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {messageVariations[0]?.length || 0}/1000
+                      </span>
+                    </div>
                   </div>
+                ) : (
+                  <Tabs value={activeVariationTab.toString()} onValueChange={(v) => setActiveVariationTab(Number(v))}>
+                    <div className="overflow-x-auto pb-2">
+                      <TabsList 
+                        className="grid w-full"
+                        style={{ gridTemplateColumns: `repeat(${variationCount}, minmax(0, 1fr))` }}
+                      >
+                        {Array.from({ length: variationCount }, (_, index) => (
+                          <TabsTrigger key={index} value={index.toString()} className="text-xs sm:text-sm">
+                            {index + 1}
+                            {messageVariations[index]?.trim() && " ✓"}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                    </div>
 
-                  {Array.from({ length: variationCount }, (_, index) => (
-                    <TabsContent key={index} value={index.toString()} className="mt-4">
-                      <div>
-                        <Textarea
-                          placeholder={`Olá {nome}, tudo bem? 😊 (Variação ${index + 1})`}
-                          value={messageVariations[index] || ""}
-                          onChange={(e) => {
-                            const newVariations = [...messageVariations];
-                            newVariations[index] = e.target.value.slice(0, 1000);
-                            setMessageVariations(newVariations);
-                          }}
-                          className="min-h-[120px] resize-none"
-                          spellCheck="false"
-                          lang="pt-BR"
-                        />
-                        <div className="flex justify-between items-center mt-1">
-                          <span className="text-xs text-muted-foreground">
-                            {index === 0 && "Obrigatória"} {index > 0 && "Opcional"}
-                          </span>
+                    {Array.from({ length: variationCount }, (_, index) => (
+                      <TabsContent key={index} value={index.toString()} className="mt-4">
+                        <div>
+                          <Textarea
+                            placeholder={`Olá {nome}, tudo bem? 😊 (Variação ${index + 1})`}
+                            value={messageVariations[index] || ""}
+                            onChange={(e) => {
+                              const newVariations = [...messageVariations];
+                              newVariations[index] = e.target.value.slice(0, 1000);
+                              setMessageVariations(newVariations);
+                            }}
+                            className="min-h-[120px] resize-none"
+                            spellCheck="false"
+                            lang="pt-BR"
+                          />
+                          <div className="flex justify-between items-center mt-1">
+                            <span className="text-xs text-muted-foreground">
+                              {index === 0 && "Obrigatória"} {index > 0 && "Opcional"}
+                            </span>
                           <span className="text-xs text-muted-foreground">
                             {messageVariations[index]?.length || 0}/1000
                           </span>
@@ -1387,6 +1454,7 @@ const Results = () => {
                     </TabsContent>
                   ))}
                 </Tabs>
+                )}
 
                 {/* Anti-Ban Tip */}
                 <Card className="bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800">
@@ -1879,6 +1947,7 @@ const Results = () => {
         </Dialog>
       </div>
     </div>
+    </TooltipProvider>
   );
 };
 
