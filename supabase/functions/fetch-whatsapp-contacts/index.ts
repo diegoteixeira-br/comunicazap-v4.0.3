@@ -66,8 +66,23 @@ serve(async (req) => {
       );
     }
 
-    // Use findChats endpoint to get all conversations
-    const response = await fetch(
+    // Fetch saved contacts (agenda completa)
+    console.log('Fetching saved contacts...');
+    const contactsResponse = await fetch(
+      `${evolutionApiUrl}/chat/findContacts/${instance.instance_name}`,
+      {
+        method: 'POST',
+        headers: {
+          'apikey': evolutionApiKey || '',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ where: {} }),
+      }
+    );
+
+    // Fetch recent chats (conversas recentes)
+    console.log('Fetching recent chats...');
+    const chatsResponse = await fetch(
       `${evolutionApiUrl}/chat/findChats/${instance.instance_name}`,
       {
         method: 'POST',
@@ -79,54 +94,60 @@ serve(async (req) => {
       }
     );
 
-    if (!response.ok) {
-      console.error('Evolution API error:', response.status, await response.text());
+    if (!contactsResponse.ok && !chatsResponse.ok) {
+      console.error('Evolution API error - both endpoints failed');
       return new Response(
         JSON.stringify({ error: 'Failed to fetch contacts from WhatsApp' }),
-        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const rawContacts = await response.json();
-    console.log('Raw contacts received:', rawContacts.length || 0);
+    const savedContacts = contactsResponse.ok ? await contactsResponse.json() : [];
+    const recentChats = chatsResponse.ok ? await chatsResponse.json() : [];
     
-    // Log first chat structure for debugging
-    if (rawContacts.length > 0) {
-      console.log('Sample chat structure:', JSON.stringify(rawContacts[0]));
-      console.log('Available fields:', Object.keys(rawContacts[0]));
-    }
+    console.log('Saved contacts received:', savedContacts.length || 0);
+    console.log('Recent chats received:', recentChats.length || 0);
 
-    // Process and clean contacts
-    const contacts: Contact[] = [];
+    // Use Map to avoid duplicates
+    const contactsMap = new Map<string, Contact>();
     
-    for (const chat of rawContacts) {
-      // Get chat ID from available fields
-      const chatId = chat.id || chat.remoteJid || '';
+    // Process saved contacts first (priority)
+    for (const contact of savedContacts) {
+      const chatId = contact.id || '';
       
-      // Skip groups (groups have @g.us suffix)
-      if (chatId.includes('@g.us')) {
-        console.log('Skipping group:', chatId);
-        continue;
-      }
+      // Skip groups
+      if (chatId.includes('@g.us')) continue;
 
-      // Extract phone number from chat ID (format: 5565XXXXXXXX@s.whatsapp.net)
+      // Extract phone number
       let phone = chatId.replace('@s.whatsapp.net', '').replace('@c.us', '');
       
-      // Get contact name from various possible fields
-      let name = chat.name || chat.pushName || chat.subject || chat.notifyName || phone;
+      // Get contact name (pushName tem prioridade)
+      let name = contact.pushName || contact.name || phone;
       
-      // Only add if we have a valid phone number (should be numeric and reasonable length)
       if (phone && phone.length >= 10 && /^\d+$/.test(phone)) {
-        contacts.push({
-          name: name,
-          phone: phone
-        });
-      } else {
-        console.log('Invalid phone number:', phone, 'from chatId:', chatId);
+        contactsMap.set(phone, { name, phone });
       }
     }
 
-    console.log('Processed contacts:', contacts.length);
+    // Add recent chats that aren't already in contacts
+    for (const chat of recentChats) {
+      const chatId = chat.id || chat.remoteJid || '';
+      
+      // Skip groups
+      if (chatId.includes('@g.us')) continue;
+
+      // Extract phone number
+      let phone = chatId.replace('@s.whatsapp.net', '').replace('@c.us', '');
+      
+      // Only add if not already in map
+      if (phone && phone.length >= 10 && /^\d+$/.test(phone) && !contactsMap.has(phone)) {
+        let name = chat.name || chat.pushName || chat.subject || chat.notifyName || phone;
+        contactsMap.set(phone, { name, phone });
+      }
+    }
+
+    const contacts = Array.from(contactsMap.values());
+    console.log('Total unique contacts processed:', contacts.length);
 
     return new Response(
       JSON.stringify({ contacts }),
