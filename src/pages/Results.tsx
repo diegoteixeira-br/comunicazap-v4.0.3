@@ -63,6 +63,7 @@ const Results = () => {
   const [loadingBlocked, setLoadingBlocked] = useState(true);
   const [showWhatsAppPhone, setShowWhatsAppPhone] = useState(true);
   const [generatingVariations, setGeneratingVariations] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState({ current: 0, total: 0 });
   const [contactSearch, setContactSearch] = useState("");
   
   // Detectar se estamos trabalhando com grupos
@@ -81,30 +82,15 @@ const Results = () => {
     return phone.substring(0, 3) + '***' + phone.slice(-4);
   };
 
-  // Calcular quantidade sugerida de variações baseada no número de contatos
-  const getMaxVariationCount = (contactCount: number): number => {
-    if (contactCount <= 10) return 1;
-    if (contactCount <= 30) return 3;
-    if (contactCount <= 50) return 5;
-    if (contactCount <= 100) return 7;
-    if (contactCount <= 250) return 10;
-    if (contactCount <= 500) return 12;
-    return 15;
+  // Calcular quantidade necessária de variações baseada em 5 contatos por variação (limite WhatsApp)
+  const getRequiredVariationCount = (contactCount: number): number => {
+    return Math.ceil(contactCount / 5); // Ex: 200 contatos = 40 variações
   };
 
-  const getIdealVariationCount = (contactCount: number): number => {
-    if (contactCount <= 10) return 1;
-    if (contactCount <= 30) return 3;
-    if (contactCount <= 50) return 5;
-    if (contactCount <= 100) return 7;
-    if (contactCount <= 250) return 10;
-    if (contactCount <= 500) return 12;
-    return 15;
-  };
-
-  const getAvailableVariationOptions = (maxCount: number): number[] => {
-    const allOptions = [1, 3, 5, 7, 10, 12, 15];
-    return allOptions.filter(opt => opt <= maxCount);
+  const getAvailableVariationOptions = (requiredCount: number): number[] => {
+    // Gerar opções até o número necessário
+    const options = [1, 3, 5, 7, 10, 12, 15, 20, 25, 30, 40, 50, 75, 100];
+    return options.filter(opt => opt <= requiredCount);
   };
 
   // Função para alterar quantidade de variações
@@ -132,13 +118,12 @@ const Results = () => {
 
   // Ajustar automaticamente o variationCount quando contatos mudam
   useEffect(() => {
-    const maxAllowed = getMaxVariationCount(clients.length);
-    const ideal = getIdealVariationCount(clients.length);
+    const required = getRequiredVariationCount(clients.length);
     
-    if (variationCount > maxAllowed) {
-      handleVariationCountChange(maxAllowed);
-    } else if (variationCount === 3 && clients.length > 0 && clients.length <= 10) {
-      handleVariationCountChange(ideal);
+    // Sugerir a quantidade necessária, mas permitir que o usuário escolha
+    if (variationCount < required && clients.length > 0) {
+      // Só ajusta se for menor que o necessário
+      handleVariationCountChange(Math.min(required, variationCount === 3 ? required : variationCount));
     }
   }, [clients.length]);
 
@@ -1298,10 +1283,14 @@ const Results = () => {
                       Mensagem Personalizada com Variações
                     </CardTitle>
             <CardDescription>
-              {variationCount === 1 
-                ? "Uma mensagem é suficiente para poucos contatos"
-                : `Crie até ${variationCount} variações de mensagem para parecer mais humano`
-              }
+              📊 Para {clients.length} contatos, são necessárias <strong>{getRequiredVariationCount(clients.length)} variações</strong>
+              <br />
+              <span className="text-xs text-muted-foreground">(Limite WhatsApp: máximo 5 contatos por variação)</span>
+              {generationProgress.total > 0 && (
+                <div className="mt-2">
+                  <span className="text-xs">Gerando lote {generationProgress.current} de {generationProgress.total}...</span>
+                </div>
+              )}
             </CardDescription>
                   </div>
                   <Tooltip>
@@ -1363,13 +1352,13 @@ const Results = () => {
                     <Select 
                       value={variationCount.toString()} 
                       onValueChange={(v) => handleVariationCountChange(Number(v))}
-                      disabled={isSending || getMaxVariationCount(clients.length) === 1}
+                      disabled={isSending || getRequiredVariationCount(clients.length) === 1}
                     >
                       <SelectTrigger className="w-20">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {getAvailableVariationOptions(getMaxVariationCount(clients.length)).map(num => (
+                        {getAvailableVariationOptions(getRequiredVariationCount(clients.length)).map(num => (
                           <SelectItem key={num} value={num.toString()}>{num}</SelectItem>
                         ))}
                       </SelectContent>
@@ -1382,7 +1371,7 @@ const Results = () => {
                     </Badge>
                   ) : (
                     <Badge variant="outline" className="text-xs">
-                      Máx: {getMaxVariationCount(clients.length)} variações para {clients.length} contatos
+                      Necessário: {getRequiredVariationCount(clients.length)} variações para {clients.length} contatos (5 por variação)
                     </Badge>
                   )}
                 </div>
