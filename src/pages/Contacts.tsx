@@ -208,7 +208,27 @@ const Contacts = () => {
 
   const handleImportContacts = async (importedContacts: { name: string; phone: string }[]) => {
     try {
-      const contactsToInsert = importedContacts.map(c => ({
+      // Buscar contatos existentes para comparar
+      const { data: existingContacts } = await supabase
+        .from('contacts')
+        .select('phone_number')
+        .eq('user_id', user?.id);
+      
+      const existingPhones = new Set(existingContacts?.map(c => c.phone_number) || []);
+      
+      // Separar novos e duplicados
+      const newContacts = importedContacts.filter(c => !existingPhones.has(c.phone));
+      const duplicates = importedContacts.length - newContacts.length;
+
+      if (newContacts.length === 0) {
+        toast({
+          title: "Nenhum contato novo",
+          description: `Todos os ${duplicates} contatos selecionados já existem na sua lista`,
+        });
+        return;
+      }
+
+      const contactsToInsert = newContacts.map(c => ({
         user_id: user?.id,
         phone_number: c.phone,
         name: c.name || null,
@@ -218,16 +238,13 @@ const Contacts = () => {
 
       const { error } = await supabase
         .from('contacts')
-        .upsert(contactsToInsert, { 
-          onConflict: 'user_id,phone_number',
-          ignoreDuplicates: true 
-        });
+        .insert(contactsToInsert);
 
       if (error) throw error;
 
       toast({
-        title: "Sucesso",
-        description: `${importedContacts.length} contatos importados com sucesso`
+        title: "Sucesso!",
+        description: `${newContacts.length} novo(s) contato(s) importado(s)${duplicates > 0 ? `, ${duplicates} já existiam` : ''}`
       });
 
       fetchContacts();

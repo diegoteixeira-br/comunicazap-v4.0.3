@@ -111,6 +111,9 @@ serve(async (req) => {
     // Use Map to avoid duplicates
     const contactsMap = new Map<string, Contact>();
     
+    let acceptedContacts = 0;
+    let rejectedContacts = 0;
+    
     // Process saved contacts first (priority)
     for (const contact of savedContacts) {
       const chatId = contact.id || '';
@@ -118,14 +121,27 @@ serve(async (req) => {
       // Skip groups
       if (chatId.includes('@g.us')) continue;
 
-      // Extract phone number
-      let phone = chatId.replace('@s.whatsapp.net', '').replace('@c.us', '');
+      // Extract phone number - remove WhatsApp suffixes and clean
+      let phone = chatId
+        .replace('@s.whatsapp.net', '')
+        .replace('@c.us', '')
+        .replace(/:.*$/, '');  // Remove :0, :1, etc.
+      
+      // Remove all non-numeric characters
+      phone = phone.replace(/\D/g, '');
       
       // Get contact name (pushName tem prioridade)
       let name = contact.pushName || contact.name || phone;
       
-      if (phone && phone.length >= 10 && /^\d+$/.test(phone)) {
+      // More flexible validation - accept 8+ digits
+      if (phone && phone.length >= 8 && /^\d{8,}$/.test(phone)) {
         contactsMap.set(phone, { name, phone });
+        acceptedContacts++;
+      } else {
+        rejectedContacts++;
+        if (rejectedContacts <= 5) {
+          console.log('Rejected contact sample:', { id: contact.id, phone });
+        }
       }
     }
 
@@ -136,17 +152,26 @@ serve(async (req) => {
       // Skip groups
       if (chatId.includes('@g.us')) continue;
 
-      // Extract phone number
-      let phone = chatId.replace('@s.whatsapp.net', '').replace('@c.us', '');
+      // Extract phone number - same cleaning as above
+      let phone = chatId
+        .replace('@s.whatsapp.net', '')
+        .replace('@c.us', '')
+        .replace(/:.*$/, '');
+      
+      phone = phone.replace(/\D/g, '');
       
       // Only add if not already in map
-      if (phone && phone.length >= 10 && /^\d+$/.test(phone) && !contactsMap.has(phone)) {
+      if (phone && phone.length >= 8 && /^\d{8,}$/.test(phone) && !contactsMap.has(phone)) {
         let name = chat.name || chat.pushName || chat.subject || chat.notifyName || phone;
         contactsMap.set(phone, { name, phone });
+        acceptedContacts++;
+      } else if (!contactsMap.has(phone)) {
+        rejectedContacts++;
       }
     }
 
     const contacts = Array.from(contactsMap.values());
+    console.log(`Contacts processing: ${acceptedContacts} accepted, ${rejectedContacts} rejected`);
     console.log('Total unique contacts processed:', contacts.length);
 
     return new Response(
