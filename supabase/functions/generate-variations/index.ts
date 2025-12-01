@@ -78,20 +78,31 @@ serve(async (req) => {
 
       console.log(`Generating batch ${batch + 1}/${totalBatches} with ${batchSize} variations`);
 
-      // Prompt melhorado com regra 70/30 de emojis
-      const systemPrompt = `Você é um especialista em copywriting para WhatsApp. Sua tarefa é criar ${batchSize} variações ÚNICAS de mensagens.
+      // Prompt melhorado: mensagens COMPLETAS e CRIATIVAS com separador
+      const systemPrompt = `Você é um copywriter CRIATIVO para WhatsApp. Crie ${batchSize} mensagens COMPLETAS e CRIATIVAS.
 
-REGRAS OBRIGATÓRIAS:
-- Cada variação deve ser COMPLETAMENTE diferente das anteriores
-- Use sinônimos, reorganize frases, mude a abordagem
-- Mantenha o mesmo significado e propósito da mensagem original
-- O mesmo tom (formal/informal/vendas/amigável)
-- Placeholders como {nome} devem ser preservados EXATAMENTE
-- Tamanho similar à mensagem original
-- Linguagem natural e brasileira
+⚠️ REGRA CRÍTICA DE FORMATO:
+- Cada variação DEVE ser uma MENSAGEM COMPLETA
+- Separe CADA variação com a linha: ---VARIACAO---
+- NÃO numere as variações
+- MANTENHA quebras de linha dentro de cada mensagem
+
+📋 ESTRUTURA OBRIGATÓRIA DE CADA MENSAGEM (analise a original):
+1. SAUDAÇÃO inicial (com {nome})
+2. CORPO da mensagem (1-3 parágrafos)
+3. DESPEDIDA/VOTOS
+4. ASSINATURA (se tiver na original)
+
+🎨 CRIATIVIDADE - Seja ORIGINAL e VARIADO:
+- Use diferentes formas de expressar a mesma ideia
+- Varie metáforas (novo ciclo, jornada, recomeço, etc.)
+- Alterne entre abordagens (emocional, motivacional, calorosa, inspiradora)
+- Mude a ordem dos elementos (agradecimento antes/depois)
+- Use sinônimos criativos (parceria, confiança, caminhada juntos)
+- Varie o comprimento das frases e parágrafos
 
 ${hasEmojis ? `
-REGRAS DE EMOJIS (mensagem original TEM ${emojiCount} emoji(s)):
+🎭 REGRAS DE EMOJIS (mensagem original TEM ${emojiCount} emoji(s)):
 - Crie aproximadamente ${Math.round(batchSize * 0.7)} variações COM emojis:
   • Use emojis DIFERENTES mas na mesma pegada/temática da original
   • VARIE as posições (início, meio, fim da frase)
@@ -104,7 +115,7 @@ REGRAS DE EMOJIS (mensagem original TEM ${emojiCount} emoji(s)):
   • Compense com palavras mais expressivas
   • Mantenha o mesmo entusiasmo só com texto
 ` : `
-REGRAS DE EMOJIS (mensagem original NÃO tem emojis):
+🎭 REGRAS DE EMOJIS (mensagem original NÃO tem emojis):
 - Crie aproximadamente ${Math.round(batchSize * 0.7)} variações SEM emojis:
   • Mantenha o estilo clean e profissional
   • Use apenas texto, SEM emojis
@@ -118,24 +129,67 @@ REGRAS DE EMOJIS (mensagem original NÃO tem emojis):
 `}
 
 ${allVariations.length > 0 ? `
-VARIAÇÕES JÁ CRIADAS (NÃO REPETIR):
-${allVariations.map((v, i) => `${i + 1}. ${v}`).join('\n')}
+⚠️ VARIAÇÕES JÁ CRIADAS (NÃO REPETIR):
+${allVariations.map((v, i) => `${i + 1}. ${v.substring(0, 100)}...`).join('\n')}
 
-IMPORTANTE: As novas variações devem ser DIFERENTES das ${allVariations.length} acima!
+IMPORTANTE: As novas variações devem ser COMPLETAMENTE DIFERENTES das ${allVariations.length} acima!
 ` : ''}
 
-EXEMPLOS:
-${hasEmojis ? `
-Original: "🎄 Feliz Natal, {nome}! 🎄"
-Variação COM emoji (diferente): "✨ Desejamos um Natal mágico, {nome}! 🎅"
-Variação SEM emoji: "Que este Natal seja especial para você, {nome}!"
-` : `
-Original: "Olá {nome}, confirme seu agendamento."
-Variação SEM emoji: "Oi {nome}, por favor confirme sua presença."
-Variação COM emoji: "📅 Oi {nome}, confirme seu agendamento! ✅"
-`}
+✨ EXEMPLO DE FORMATO CORRETO (Mensagem de Ano Novo):
 
-Retorne APENAS as ${batchSize} novas variações, uma por linha, sem numeração ou prefixos.`;
+ORIGINAL:
+✨ Olá, {nome}! ✨
+Chegamos ao fim de mais um ano e queremos agradecer pela sua confiança!
+Desejamos um final de ano repleto de momentos especiais.
+Boas Festas e um próspero Ano Novo! 🎊
+Com carinho, Equipe
+
+SAÍDA ESPERADA:
+🎆 Oi, {nome}! 🎆
+
+Um novo ano está chegando e com ele milhões de possibilidades!
+
+Obrigado por fazer parte da nossa história em mais esse ciclo. Sua confiança nos impulsiona a ser melhores a cada dia.
+
+Que 2025 seja o ano das suas maiores conquistas! 🚀
+
+Abraços calorosos,
+Equipe
+---VARIACAO---
+Querido(a) {nome},
+
+O ano está terminando e nosso coração transborda de gratidão por ter você conosco.
+
+Cada momento de parceria foi especial e nos ensinou algo novo. Que venha um novo ano repleto de realizações e alegrias para você e toda sua família.
+
+Feliz 2025!
+
+Com muito carinho,
+Equipe
+---VARIACAO---
+🌟 {nome}, tudo bem? 🌟
+
+Fim de ano é tempo de olhar para trás e agradecer... E você faz parte das coisas boas que aconteceram!
+
+Muito obrigado pela confiança e parceria durante todo esse ano.
+
+Desejamos que o novo ano traga tudo de mais lindo para você! ✨
+
+Um grande abraço,
+Equipe
+---VARIACAO---
+Oi {nome},
+
+Mais um ciclo se encerra e não poderíamos deixar passar sem expressar nossa gratidão.
+
+Ter você conosco faz toda a diferença! Que o próximo ano seja ainda mais incrível, cheio de conquistas e momentos memoráveis.
+
+Felizes Festas!
+
+Atenciosamente,
+Equipe
+
+Retorne APENAS as ${batchSize} novas variações separadas por ---VARIACAO---`;
 
       const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
@@ -172,11 +226,16 @@ Retorne APENAS as ${batchSize} novas variações, uma por linha, sem numeração
         throw new Error('No content generated');
       }
 
-      // Processar as variações geradas
+      // Processar as variações geradas usando o separador
       const batchVariations = generatedText
-        .split('\n')
-        .map((line: string) => line.trim())
-        .filter((line: string) => line.length > 0)
+        .split('---VARIACAO---')
+        .map((variation: string) => variation.trim())
+        .filter((variation: string) => {
+          // Validar que é uma mensagem completa
+          const isLongEnough = variation.length > 50;
+          const hasPlaceholder = variation.includes('{nome}');
+          return isLongEnough && hasPlaceholder;
+        })
         .slice(0, batchSize);
 
       // Se não conseguiu gerar todas, preencher com modificações da original
