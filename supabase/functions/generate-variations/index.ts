@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const MAX_PER_BATCH = 10; // IA gera bem até 10 variações por vez
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -31,82 +33,120 @@ serve(async (req) => {
       throw new Error('Original message is required');
     }
 
-    // Validar count (mínimo 3, máximo 15)
-    const variationCount = Math.min(15, Math.max(3, count));
+    // Sem limite máximo - calcular com base no número de contatos
+    const variationCount = Math.max(1, count);
     const toGenerate = variationCount - 1; // Menos a original
+
+    if (toGenerate === 0) {
+      // Se só precisa de 1, retornar apenas a original
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          variations: [originalMessage]
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    console.log('Generating variations with Lovable AI for user:', user.id);
+    console.log(`Generating ${toGenerate} variations for user ${user.id}`);
 
-    // Prompt otimizado para gerar N variações
-    const systemPrompt = `Você é um especialista em copywriting para WhatsApp. Sua tarefa é criar ${toGenerate} variações de mensagens que mantenham:
-- O mesmo significado e propósito da mensagem original
+    // Dividir em lotes para evitar sobrecarregar a IA
+    const totalBatches = Math.ceil(toGenerate / MAX_PER_BATCH);
+    const allVariations: string[] = [];
+
+    for (let batch = 0; batch < totalBatches; batch++) {
+      const isLastBatch = batch === totalBatches - 1;
+      const batchSize = isLastBatch 
+        ? toGenerate - (batch * MAX_PER_BATCH)
+        : MAX_PER_BATCH;
+
+      console.log(`Generating batch ${batch + 1}/${totalBatches} with ${batchSize} variations`);
+
+      // Prompt melhorado para evitar repetições
+      const systemPrompt = `Você é um especialista em copywriting para WhatsApp. Sua tarefa é criar ${batchSize} variações ÚNICAS de mensagens.
+
+REGRAS OBRIGATÓRIAS:
+- Cada variação deve ser COMPLETAMENTE diferente das anteriores
+- Use sinônimos, reorganize frases, mude a abordagem
+- Mantenha o mesmo significado e propósito da mensagem original
 - O mesmo tom (formal/informal/vendas/amigável)
-- Placeholders como {nome} devem ser preservados exatamente
+- Placeholders como {nome} devem ser preservados EXATAMENTE
 - Tamanho similar à mensagem original
 - Emojis apenas se a original tiver (mantenha o estilo)
 - Linguagem natural e brasileira
-- CADA variação deve ser sutilmente diferente (palavras, ordem das frases, expressões)
 
-IMPORTANTE: Retorne APENAS as ${toGenerate} variações, uma por linha, sem numeração ou prefixos.`;
+${allVariations.length > 0 ? `
+VARIAÇÕES JÁ CRIADAS (NÃO REPETIR):
+${allVariations.map((v, i) => `${i + 1}. ${v}`).join('\n')}
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Mensagem original:\n\n${originalMessage}\n\nCrie ${toGenerate} variações diferentes desta mensagem.` }
-        ],
-        temperature: 0.8,
-      }),
-    });
+IMPORTANTE: As novas variações devem ser DIFERENTES das ${allVariations.length} acima!
+` : ''}
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        throw new Error('Limite de taxa excedido. Tente novamente em alguns instantes.');
+Retorne APENAS as ${batchSize} novas variações, uma por linha, sem numeração ou prefixos.`;
+
+      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: `Mensagem original:\n\n${originalMessage}\n\nCrie ${batchSize} variações ÚNICAS e DIFERENTES.` }
+          ],
+          temperature: 0.9, // Mais criatividade para evitar repetições
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error('Limite de taxa excedido. Tente novamente em alguns instantes.');
+        }
+        if (response.status === 402) {
+          throw new Error('Créditos insuficientes. Adicione créditos à sua conta Lovable.');
+        }
+        const errorText = await response.text();
+        console.error('Lovable AI error:', response.status, errorText);
+        throw new Error('Erro ao gerar variações com IA');
       }
-      if (response.status === 402) {
-        throw new Error('Créditos insuficientes. Adicione créditos à sua conta Lovable.');
+
+      const data = await response.json();
+      const generatedText = data.choices?.[0]?.message?.content;
+
+      if (!generatedText) {
+        throw new Error('No content generated');
       }
-      const errorText = await response.text();
-      console.error('Lovable AI error:', response.status, errorText);
-      throw new Error('Erro ao gerar variações com IA');
+
+      // Processar as variações geradas
+      const batchVariations = generatedText
+        .split('\n')
+        .map((line: string) => line.trim())
+        .filter((line: string) => line.length > 0)
+        .slice(0, batchSize);
+
+      // Se não conseguiu gerar todas, preencher com modificações da original
+      while (batchVariations.length < batchSize) {
+        batchVariations.push(`${originalMessage} (variação ${allVariations.length + batchVariations.length + 1})`);
+      }
+
+      allVariations.push(...batchVariations);
+      
+      console.log(`Batch ${batch + 1} complete: ${batchVariations.length} variations generated`);
     }
 
-    const data = await response.json();
-    const generatedText = data.choices?.[0]?.message?.content;
-
-    if (!generatedText) {
-      throw new Error('No content generated');
-    }
-
-    // Processar as variações geradas (dividir por linha e limpar)
-    const variations = generatedText
-      .split('\n')
-      .map((line: string) => line.trim())
-      .filter((line: string) => line.length > 0)
-      .slice(0, toGenerate); // Garantir apenas toGenerate variações
-
-    // Se não conseguiu gerar todas, preencher com a original
-    while (variations.length < toGenerate) {
-      variations.push(originalMessage);
-    }
-
-    console.log('Generated variations:', variations.length, 'Requested:', variationCount);
+    console.log(`Total generated: ${allVariations.length} variations (requested: ${toGenerate})`);
 
     return new Response(
       JSON.stringify({ 
         success: true,
-        variations: [originalMessage, ...variations] // Original + N-1 variações
+        variations: [originalMessage, ...allVariations] // Original + variações
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
