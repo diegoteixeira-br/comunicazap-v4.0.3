@@ -28,6 +28,17 @@ const MAX_TYPING_DELAY = 15000; // 15s máximo
 // Funções auxiliares
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Escapar texto para ser seguro em JSON dentro do n8n
+const escapeTextForJson = (text: string): string => {
+  if (!text) return '';
+  return text
+    .replace(/\\/g, '\\\\')     // Backslash primeiro
+    .replace(/\n/g, '\\n')      // Nova linha → \n
+    .replace(/\r/g, '\\r')      // Retorno de carro → \r
+    .replace(/\t/g, '\\t')      // Tab → \t
+    .replace(/"/g, '\\"');      // Aspas → \"
+};
+
 const getRandomDelay = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
@@ -444,6 +455,9 @@ serve(async (req) => {
             ? calculateTypingDelay(personalizedMessage)
             : MIN_TYPING_DELAY;
 
+          // Escapar o texto para JSON seguro
+          const safeText = escapeTextForJson(personalizedMessage);
+
           const payload: any = {
             instanceName: instance.instance_name,
             api_key: instance.api_key,
@@ -454,9 +468,9 @@ serve(async (req) => {
             }
           };
 
-          // Adicionar texto se existir
-          if (personalizedMessage?.trim()) {
-            payload.text = personalizedMessage;
+          // Adicionar texto escapado se existir
+          if (safeText?.trim()) {
+            payload.text = safeText;
           }
 
           // Adicionar URL da mídia se existir

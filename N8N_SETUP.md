@@ -104,13 +104,13 @@ http://evolution:8080/message/sendText/{{ $json.body.instanceName }}
 
 #### 5. Body (JSON)
 
-**FORMATO ATUALIZADO - Agora com simulação de digitação:**
+**FORMATO ATUALIZADO - Agora com simulação de digitação e texto pré-escapado:**
 
 ```json
 {
   "number": "{{ $json.body.number }}",
   "options": {
-    "delay": "{{ $json.body.options.delay }}",
+    "delay": {{ $json.body.options.delay }},
     "presence": "{{ $json.body.options.presence }}"
   },
   "textMessage": {
@@ -122,7 +122,9 @@ http://evolution:8080/message/sendText/{{ $json.body.instanceName }}
 **O que mudou:**
 - ✅ Adicionado `options.delay` - simula tempo de digitação (calculado automaticamente pelo sistema)
 - ✅ Adicionado `options.presence: "composing"` - mostra "digitando..." para o destinatário
+- ✅ **NOVO:** O texto já vem **pré-escapado** do backend - não precisa mais de `.replace()` no n8n!
 - ✅ Mensagem agora vai dentro de `textMessage.text` conforme API da Evolution
+- ✅ **Importante:** Remova as aspas do `delay` (use `{{ $json.body.options.delay }}` sem aspas) para ser enviado como número
 
 #### 6. Options
 - Body Content Type: **application/json**
@@ -149,13 +151,13 @@ http://evolution:8080/message/sendMedia/{{ $json.body.instanceName }}
 
 #### 5. Body (JSON)
 
-**FORMATO ATUALIZADO - Com simulação de digitação e URL direta:**
+**FORMATO ATUALIZADO - Com simulação de digitação, URL direta e texto pré-escapado:**
 
 ```json
 {
   "number": "{{ $json.body.number }}",
   "options": {
-    "delay": "{{ $json.body.options.delay }}",
+    "delay": {{ $json.body.options.delay }},
     "presence": "{{ $json.body.options.presence }}"
   },
   "mediaMessage": {
@@ -168,12 +170,12 @@ http://evolution:8080/message/sendMedia/{{ $json.body.instanceName }}
 ```
 
 **Explicação:**
-- `options.delay`: Tempo de digitação simulado (calculado pelo sistema)
+- `options.delay`: Tempo de digitação simulado (calculado pelo sistema) - **SEM ASPAS** para ser número
 - `options.presence`: Mostra "digitando..." antes de enviar
 - `mediaMessage.mediatype`: Pode ser `"image"` ou `"video"` (use `"image"` que funciona para ambos)
 - `mediaMessage.mimetype`: O tipo MIME correto do arquivo (ex: `image/png`, `image/jpeg`, `video/mp4`)
 - `mediaMessage.media`: URL pública do arquivo no Supabase Storage
-- `mediaMessage.caption`: O texto da mensagem
+- `mediaMessage.caption`: O texto da mensagem - **já vem pré-escapado** do backend, não precisa de manipulação!
 - ✅ **Vantagem:** Parece envio humano real com simulação de digitação!
 
 #### 6. Options
@@ -189,7 +191,7 @@ Se você não quiser usar o nó IF, configure apenas um HTTP Request que tenta e
 {
   "number": "{{ $json.body.number }}",
   "options": {
-    "delay": "{{ $json.body.options.delay }}",
+    "delay": {{ $json.body.options.delay }},
     "presence": "{{ $json.body.options.presence }}"
   },
   "textMessage": {
@@ -204,7 +206,9 @@ Se você não quiser usar o nó IF, configure apenas um HTTP Request que tenta e
 }
 ```
 
-**ATENÇÃO:** Esta configuração pode não funcionar bem. Por isso, **recomendamos fortemente usar o nó IF**.
+**ATENÇÃO:** 
+- Esta configuração pode não funcionar bem. Por isso, **recomendamos fortemente usar o nó IF**.
+- Note que `delay` não tem aspas - deve ser enviado como número para a Evolution API
 
 ## Sistema de Variações de Mensagem
 
