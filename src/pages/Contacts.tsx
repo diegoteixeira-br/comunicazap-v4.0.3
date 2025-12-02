@@ -32,8 +32,18 @@ import {
   Cake,
   Upload as UploadIcon,
   FileSpreadsheet,
-  Send
+  Send,
+  CheckSquare,
+  Shuffle,
+  ChevronDown
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ImportContactsModal } from "@/components/ImportContactsModal";
 import { format, isSameDay } from "date-fns";
 import {
@@ -85,6 +95,10 @@ const Contacts = () => {
   const [bulkTags, setBulkTags] = useState("");
   
   const [allTags, setAllTags] = useState<string[]>([]);
+  
+  // Estados para seleção avançada
+  const [showRandomDialog, setShowRandomDialog] = useState(false);
+  const [randomQuantity, setRandomQuantity] = useState(50);
 
   useEffect(() => {
     if (user) {
@@ -398,12 +412,28 @@ const Contacts = () => {
     setSelectedContacts(newSelection);
   };
 
-  const toggleAllSelection = () => {
-    if (selectedContacts.size === filteredContacts.length) {
-      setSelectedContacts(new Set());
-    } else {
-      setSelectedContacts(new Set(filteredContacts.map(c => c.id)));
-    }
+  // Funções de seleção avançada
+  const selectAll = () => {
+    setSelectedContacts(new Set(filteredContacts.map(c => c.id)));
+  };
+
+  const selectCurrentPage = () => {
+    const pageContacts = filteredContacts.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+    setSelectedContacts(new Set(pageContacts.map(c => c.id)));
+  };
+
+  const selectRandom = (quantity: number) => {
+    const shuffled = [...filteredContacts].sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, Math.min(quantity, filteredContacts.length));
+    setSelectedContacts(new Set(selected.map(c => c.id)));
+    setShowRandomDialog(false);
+  };
+
+  const clearSelection = () => {
+    setSelectedContacts(new Set());
   };
 
   const processSpreadsheetFile = async (file: File) => {
@@ -721,10 +751,39 @@ const Contacts = () => {
                     </span>
                   )}
                 </CardTitle>
-                <Checkbox
-                  checked={selectedContacts.size === filteredContacts.length && filteredContacts.length > 0}
-                  onCheckedChange={toggleAllSelection}
-                />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <CheckSquare className="h-4 w-4" />
+                      Selecionar
+                      {selectedContacts.size > 0 && (
+                        <Badge variant="secondary" className="ml-1">
+                          {selectedContacts.size}
+                        </Badge>
+                      )}
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-popover">
+                    <DropdownMenuItem onClick={selectAll}>
+                      <CheckSquare className="mr-2 h-4 w-4" />
+                      Selecionar Todos ({filteredContacts.length})
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={selectCurrentPage}>
+                      <CheckSquare className="mr-2 h-4 w-4" />
+                      Selecionar Página ({Math.min(itemsPerPage, filteredContacts.length - (currentPage - 1) * itemsPerPage)})
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowRandomDialog(true)}>
+                      <Shuffle className="mr-2 h-4 w-4" />
+                      Seleção Aleatória
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={clearSelection} disabled={selectedContacts.size === 0}>
+                      <X className="mr-2 h-4 w-4" />
+                      Limpar Seleção
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </CardHeader>
             <CardContent>
@@ -1028,6 +1087,62 @@ const Contacts = () => {
                 disabled={isProcessingFile}
               >
                 Cancelar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Random Selection Dialog */}
+        <Dialog open={showRandomDialog} onOpenChange={setShowRandomDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Shuffle className="h-5 w-5" />
+                Seleção Aleatória
+              </DialogTitle>
+              <DialogDescription>
+                Escolha quantos contatos deseja selecionar aleatoriamente dos {filteredContacts.length} filtrados
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="random-quantity">Quantidade</Label>
+                <Input
+                  id="random-quantity"
+                  type="number"
+                  min={1}
+                  max={filteredContacts.length}
+                  value={randomQuantity}
+                  onChange={(e) => setRandomQuantity(Math.max(1, Math.min(parseInt(e.target.value) || 1, filteredContacts.length)))}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">Atalhos rápidos</Label>
+                <div className="flex gap-2 flex-wrap">
+                  {[10, 50, 100, 200, 500].map((qty) => (
+                    <Button
+                      key={qty}
+                      variant={randomQuantity === qty ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setRandomQuantity(Math.min(qty, filteredContacts.length))}
+                      disabled={qty > filteredContacts.length}
+                    >
+                      {qty}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowRandomDialog(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={() => selectRandom(randomQuantity)}>
+                <Shuffle className="mr-2 h-4 w-4" />
+                Selecionar {randomQuantity}
               </Button>
             </DialogFooter>
           </DialogContent>
