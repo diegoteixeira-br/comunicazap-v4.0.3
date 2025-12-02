@@ -156,24 +156,46 @@ const Contacts = () => {
     setCurrentPage(1); // Reset to first page when filters change
   }, [contacts, searchTerm, statusFilter, tagFilter]);
 
-  const fetchContacts = async () => {
-    try {
-      setLoading(true);
+  const fetchAllContactsPaginated = async (userId: string): Promise<Contact[]> => {
+    const allContacts: Contact[] = [];
+    const pageSize = 1000;
+    let offset = 0;
+    let hasMore = true;
+
+    while (hasMore) {
       const { data, error } = await supabase
         .from('contacts')
         .select('*')
-        .eq('user_id', user?.id)
-        .order('name', { ascending: true, nullsFirst: false });
+        .eq('user_id', userId)
+        .order('name', { ascending: true, nullsFirst: false })
+        .range(offset, offset + pageSize - 1);
 
       if (error) throw error;
 
+      if (data && data.length > 0) {
+        allContacts.push(...data);
+        offset += pageSize;
+        hasMore = data.length === pageSize;
+      } else {
+        hasMore = false;
+      }
+    }
+
+    return allContacts;
+  };
+
+  const fetchContacts = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchAllContactsPaginated(user?.id as string);
+
       // Ordenação personalizada: letras A-Z primeiro, depois símbolos/números/emojis
-      const sortedData = sortContactsCustom(data || []);
+      const sortedData = sortContactsCustom(data);
       setContacts(sortedData);
       
       // Extract all unique tags with counts
       const tagsMap = new Map<string, number>();
-      data?.forEach(contact => {
+      data.forEach(contact => {
         contact.tags?.forEach((tag: string) => {
           tagsMap.set(tag, (tagsMap.get(tag) || 0) + 1);
         });
