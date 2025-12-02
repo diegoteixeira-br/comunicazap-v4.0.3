@@ -108,10 +108,14 @@ const Contacts = () => {
   const [availableCount, setAvailableCount] = useState(0);
   const [loadingContacted, setLoadingContacted] = useState(false);
 
-  // Função para verificar se o nome começa com letra A-Z
+  // Função para verificar se o nome começa com letra A-Z (incluindo acentuadas)
   const startsWithLetter = (name: string | null): boolean => {
     if (!name || name.trim() === '') return false;
-    const firstChar = name.trim()[0].toUpperCase();
+    // Normaliza para decompor acentos (NFD) e remove diacríticos
+    const firstChar = name.trim()[0]
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase();
     return firstChar >= 'A' && firstChar <= 'Z';
   };
 
