@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,24 +10,28 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ArrowLeft, Plus, Search, Eye, Copy, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Search, Eye, Copy, Edit, Trash2, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   MessageTemplate,
-  getAllTemplates,
-  saveCustomTemplate,
-  updateCustomTemplate,
-  deleteCustomTemplate,
+  getDefaultTemplates,
+  getCustomTemplatesFromDB,
+  saveCustomTemplateDB,
+  updateCustomTemplateDB,
+  deleteCustomTemplateDB,
   getCategoryIcon,
   getCategoryLabel,
 } from "@/data/messageTemplates";
 
 const Templates = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   // Templates
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [filteredTemplates, setFilteredTemplates] = useState<MessageTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   
   // Filtros
   const [searchQuery, setSearchQuery] = useState("");
@@ -49,18 +54,35 @@ const Templates = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deletingTemplate, setDeletingTemplate] = useState<MessageTemplate | null>(null);
 
+  const loadTemplates = useCallback(async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const defaultTemplates = getDefaultTemplates();
+      const customTemplates = await getCustomTemplatesFromDB(user.id);
+      setTemplates([...defaultTemplates, ...customTemplates]);
+    } catch (error: any) {
+      console.error("Erro ao carregar templates:", error);
+      toast({
+        title: "Erro ao carregar templates",
+        description: error.message || "Não foi possível carregar seus templates.",
+        variant: "destructive",
+      });
+      // Fallback: mostrar apenas templates padrão
+      setTemplates(getDefaultTemplates());
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
   useEffect(() => {
     loadTemplates();
-  }, []);
+  }, [loadTemplates]);
 
   useEffect(() => {
     applyFilters();
   }, [templates, searchQuery, categoryFilter]);
-
-  const loadTemplates = () => {
-    const allTemplates = getAllTemplates();
-    setTemplates(allTemplates);
-  };
 
   const applyFilters = () => {
     let filtered = [...templates];
@@ -107,7 +129,16 @@ const Templates = () => {
     setShowCreateDialog(true);
   };
 
-  const handleSaveTemplate = () => {
+  const handleSaveTemplate = async () => {
+    if (!user) {
+      toast({
+        title: "Erro",
+        description: "Você precisa estar logado para salvar templates.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!formTitle.trim() || !formMessage.trim()) {
       toast({
         title: "Campos obrigatórios",
@@ -117,31 +148,33 @@ const Templates = () => {
       return;
     }
     
+    setSaving(true);
     try {
-      const template: MessageTemplate = {
-        id: editingTemplate?.id || `custom-${Date.now()}`,
-        title: formTitle.trim(),
-        message: formMessage.trim(),
-        category: formCategory,
-        isCustom: true,
-        createdAt: editingTemplate?.createdAt || new Date().toISOString()
-      };
-      
       if (editingTemplate) {
-        updateCustomTemplate(template);
+        // Atualizar template existente
+        await updateCustomTemplateDB(editingTemplate.id, {
+          title: formTitle.trim(),
+          message: formMessage.trim(),
+          category: formCategory
+        });
         toast({
           title: "Template atualizado!",
           description: "Suas alterações foram salvas.",
         });
       } else {
-        saveCustomTemplate(template);
+        // Criar novo template
+        await saveCustomTemplateDB(user.id, {
+          title: formTitle.trim(),
+          message: formMessage.trim(),
+          category: formCategory
+        });
         toast({
           title: "Template criado!",
           description: "Novo template adicionado com sucesso.",
         });
       }
       
-      loadTemplates();
+      await loadTemplates();
       resetForm();
     } catch (error: any) {
       toast({
@@ -149,6 +182,8 @@ const Templates = () => {
         description: error.message || "Não foi possível salvar o template.",
         variant: "destructive",
       });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -157,12 +192,13 @@ const Templates = () => {
     setShowDeleteDialog(true);
   };
 
-  const handleDeleteTemplate = () => {
+  const handleDeleteTemplate = async () => {
     if (!deletingTemplate) return;
     
+    setSaving(true);
     try {
-      deleteCustomTemplate(deletingTemplate.id);
-      loadTemplates();
+      await deleteCustomTemplateDB(deletingTemplate.id);
+      await loadTemplates();
       toast({
         title: "Template excluído!",
         description: "O template foi removido com sucesso.",
@@ -175,6 +211,8 @@ const Templates = () => {
         description: error.message || "Não foi possível excluir o template.",
         variant: "destructive",
       });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -262,8 +300,15 @@ const Templates = () => {
             </Select>
           </div>
 
+          {/* Loading State */}
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          )}
+
           {/* Templates Padrão */}
-          {defaultTemplates.length > 0 && (
+          {!loading && defaultTemplates.length > 0 && (
             <div className="mb-8">
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 📋 Templates Padrão
@@ -335,7 +380,7 @@ const Templates = () => {
           )}
 
           {/* Templates Personalizados */}
-          {customTemplates.length > 0 && (
+          {!loading && customTemplates.length > 0 && (
             <div className="mb-8">
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 ✏️ Meus Templates
@@ -419,7 +464,7 @@ const Templates = () => {
           )}
 
           {/* Mensagem vazia */}
-          {filteredTemplates.length === 0 && (
+          {!loading && filteredTemplates.length === 0 && (
             <Card className="text-center py-12">
               <CardContent>
                 <p className="text-muted-foreground">
@@ -504,11 +549,18 @@ const Templates = () => {
               </div>
 
               <DialogFooter>
-                <Button variant="outline" onClick={resetForm}>
+                <Button variant="outline" onClick={resetForm} disabled={saving}>
                   Cancelar
                 </Button>
-                <Button onClick={handleSaveTemplate}>
-                  💾 Salvar Template
+                <Button onClick={handleSaveTemplate} disabled={saving}>
+                  {saving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    "💾 Salvar Template"
+                  )}
                 </Button>
               </DialogFooter>
             </DialogContent>

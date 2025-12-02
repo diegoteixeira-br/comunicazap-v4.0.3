@@ -1,3 +1,5 @@
+import { supabase } from "@/integrations/supabase/client";
+
 export interface MessageTemplate {
   id: string;
   title: string;
@@ -168,6 +170,110 @@ Equipe`,
   },
 ];
 
+// ==================== FUNÇÕES DO BANCO DE DADOS ====================
+
+// Buscar templates personalizados do banco de dados
+export const getCustomTemplatesFromDB = async (userId: string): Promise<MessageTemplate[]> => {
+  const { data, error } = await supabase
+    .from('user_templates')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  
+  if (error) {
+    console.error("Erro ao buscar templates:", error);
+    throw error;
+  }
+  
+  return (data || []).map(t => ({
+    id: t.id,
+    title: t.title,
+    message: t.message,
+    category: t.category as MessageTemplate["category"],
+    isCustom: true,
+    createdAt: t.created_at
+  }));
+};
+
+// Salvar novo template no banco
+export const saveCustomTemplateDB = async (
+  userId: string, 
+  template: Omit<MessageTemplate, 'id' | 'isCustom' | 'createdAt'>
+): Promise<MessageTemplate> => {
+  // Verificar limite de 50 templates
+  const { count, error: countError } = await supabase
+    .from('user_templates')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId);
+
+  if (countError) throw countError;
+  
+  if ((count || 0) >= 50) {
+    throw new Error("Limite de 50 templates personalizados atingido");
+  }
+
+  const { data, error } = await supabase
+    .from('user_templates')
+    .insert({
+      user_id: userId,
+      title: template.title,
+      message: template.message,
+      category: template.category
+    })
+    .select()
+    .single();
+  
+  if (error) {
+    console.error("Erro ao salvar template:", error);
+    throw error;
+  }
+  
+  return {
+    id: data.id,
+    title: data.title,
+    message: data.message,
+    category: data.category as MessageTemplate["category"],
+    isCustom: true,
+    createdAt: data.created_at
+  };
+};
+
+// Atualizar template existente
+export const updateCustomTemplateDB = async (
+  templateId: string, 
+  updates: Partial<Pick<MessageTemplate, 'title' | 'message' | 'category'>>
+): Promise<void> => {
+  const { error } = await supabase
+    .from('user_templates')
+    .update({
+      title: updates.title,
+      message: updates.message,
+      category: updates.category,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', templateId);
+  
+  if (error) {
+    console.error("Erro ao atualizar template:", error);
+    throw error;
+  }
+};
+
+// Excluir template
+export const deleteCustomTemplateDB = async (templateId: string): Promise<void> => {
+  const { error } = await supabase
+    .from('user_templates')
+    .delete()
+    .eq('id', templateId);
+  
+  if (error) {
+    console.error("Erro ao excluir template:", error);
+    throw error;
+  }
+};
+
+// ==================== FUNÇÕES LEGADAS (localStorage) - Mantidas para compatibilidade ====================
+
 export const getCustomTemplates = (): MessageTemplate[] => {
   try {
     const stored = localStorage.getItem("whatsapp-custom-templates");
@@ -185,12 +291,9 @@ export const getAllTemplates = (): MessageTemplate[] => {
 export const saveCustomTemplate = (template: MessageTemplate): void => {
   try {
     const existing = getCustomTemplates();
-    
-    // Limite de 50 templates personalizados
     if (existing.length >= 50) {
       throw new Error("Limite de 50 templates personalizados atingido");
     }
-    
     const updated = [...existing, template];
     localStorage.setItem("whatsapp-custom-templates", JSON.stringify(updated));
   } catch (error) {
@@ -203,11 +306,9 @@ export const updateCustomTemplate = (template: MessageTemplate): void => {
   try {
     const existing = getCustomTemplates();
     const index = existing.findIndex(t => t.id === template.id);
-    
     if (index === -1) {
       throw new Error("Template não encontrado");
     }
-    
     existing[index] = { ...template };
     localStorage.setItem("whatsapp-custom-templates", JSON.stringify(existing));
   } catch (error) {

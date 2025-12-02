@@ -360,6 +360,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_templates: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          message: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          message: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          message?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       whatsapp_instances: {
         Row: {
           ai_agent_active: boolean | null
