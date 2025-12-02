@@ -36,6 +36,10 @@ import {
   CheckSquare,
   ListOrdered,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Loader2
 } from "lucide-react";
 import {
@@ -947,31 +951,86 @@ const Contacts = () => {
               </div>
               
               {/* Pagination Controls */}
-              {filteredContacts.length > itemsPerPage && (
-                <div className="flex items-center justify-between pt-4 mt-4 border-t">
-                  <p className="text-sm text-muted-foreground">
-                    Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, filteredContacts.length)} de {filteredContacts.length} contatos
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                    >
-                      Anterior
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredContacts.length / itemsPerPage), p + 1))}
-                      disabled={currentPage >= Math.ceil(filteredContacts.length / itemsPerPage)}
-                    >
-                      Próxima
-                    </Button>
+              {filteredContacts.length > itemsPerPage && (() => {
+                const totalPages = Math.ceil(filteredContacts.length / itemsPerPage);
+                const visibleCount = 11;
+                const halfVisible = Math.floor(visibleCount / 2);
+                
+                let startPage = Math.max(1, currentPage - halfVisible);
+                let endPage = Math.min(totalPages, startPage + visibleCount - 1);
+                
+                if (endPage - startPage < visibleCount - 1) {
+                  startPage = Math.max(1, endPage - visibleCount + 1);
+                }
+                
+                const visiblePages = [];
+                for (let i = startPage; i <= endPage; i++) {
+                  visiblePages.push(i);
+                }
+                
+                return (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 mt-4 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, filteredContacts.length)} de {filteredContacts.length} contatos
+                    </p>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setCurrentPage(1)}
+                        disabled={currentPage === 1}
+                        title="Primeira página"
+                      >
+                        <ChevronsLeft className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setCurrentPage(p => p - 1)}
+                        disabled={currentPage === 1}
+                        title="Página anterior"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      
+                      {visiblePages.map((page) => (
+                        <Button
+                          key={page}
+                          variant={page === currentPage ? "default" : "outline"}
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setCurrentPage(page)}
+                        >
+                          {page}
+                        </Button>
+                      ))}
+                      
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setCurrentPage(p => p + 1)}
+                        disabled={currentPage >= totalPages}
+                        title="Próxima página"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setCurrentPage(totalPages)}
+                        disabled={currentPage >= totalPages}
+                        title="Última página"
+                      >
+                        <ChevronsRight className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </CardContent>
           </Card>
         )}
