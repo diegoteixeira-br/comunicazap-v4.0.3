@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,6 +60,7 @@ const Contacts = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const subscription = useSubscription();
   
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [filteredContacts, setFilteredContacts] = useState<Contact[]>([]);
@@ -530,6 +532,17 @@ const Contacts = () => {
   };
 
   const handleCreateCampaign = () => {
+    // Verificar se tem acesso ativo (assinatura ou trial)
+    if (!subscription.has_access && subscription.verified) {
+      toast({
+        title: "Acesso bloqueado",
+        description: "Seu período de teste expirou ou a assinatura não está ativa. Assine para criar campanhas.",
+        variant: "destructive"
+      });
+      navigate("/subscription");
+      return;
+    }
+
     // Filtrar apenas contatos ativos selecionados
     const selectedContactsList = contacts
       .filter(c => selectedContacts.has(c.id) && c.status === 'active')
@@ -649,6 +662,7 @@ const Contacts = () => {
                     variant="default" 
                     size="sm"
                     onClick={handleCreateCampaign}
+                    disabled={!subscription.has_access && subscription.verified}
                     className="w-full sm:w-auto"
                   >
                     <Send className="mr-2 h-4 w-4" />
