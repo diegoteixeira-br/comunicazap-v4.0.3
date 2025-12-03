@@ -311,12 +311,16 @@ serve(async (req) => {
     console.log(`📋 ${contactsToSend.length} contatos prontos para envio (${clients.length - contactsToSend.length} bloqueados)`);
 
     // ============= ENVIAR TUDO PARA N8N (FIRE-AND-FORGET) =============
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const callbackUrl = `${supabaseUrl}/functions/v1/update-message-status`;
+    
     const payload = {
       instanceName: instance.instance_name,
       api_key: instance.api_key,
       campaign_id: campaign.id,
       mediaUrl: mediaUrl,
       mediaType: mediaType,
+      callback_url: callbackUrl,
       contacts: contactsToSend
     };
 
