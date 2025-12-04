@@ -238,9 +238,24 @@ Retorne APENAS as ${batchSize} novas variações separadas por ---VARIACAO---`;
         })
         .slice(0, batchSize);
 
-      // Se não conseguiu gerar todas, preencher com modificações da original
+      // Se não conseguiu gerar todas, criar variações sutis (invisíveis para humanos)
+      const subtleModifiers = [
+        (msg: string) => msg.replace(/!$/, '.'),
+        (msg: string) => msg.replace(/\.$/, '!'),
+        (msg: string) => msg.trim() + ' ',
+        (msg: string) => ' ' + msg.trim(),
+        (msg: string) => msg.replace(/\n\n/g, '\n \n'),
+        (msg: string) => msg.replace(/😊/g, '🙂'),
+        (msg: string) => msg.replace(/🎉/g, '🎊'),
+        (msg: string) => msg.replace(/✨/g, '⭐'),
+        (msg: string) => msg.replace(/❤️/g, '💖'),
+        (msg: string) => msg.replace(/👍/g, '👌'),
+      ];
+      
       while (batchVariations.length < batchSize) {
-        batchVariations.push(`${originalMessage} (variação ${allVariations.length + batchVariations.length + 1})`);
+        const modifierIndex = (allVariations.length + batchVariations.length) % subtleModifiers.length;
+        const modifier = subtleModifiers[modifierIndex];
+        batchVariations.push(modifier(originalMessage));
       }
 
       allVariations.push(...batchVariations);

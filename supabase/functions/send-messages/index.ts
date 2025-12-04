@@ -69,7 +69,7 @@ serve(async (req) => {
     // Input validation schema
     const clientSchema = z.object({
       "Nome do Cliente": z.string().trim().min(1).max(100),
-      "Telefone do Cliente": z.string().regex(/^\+?[1-9]\d{1,14}$|^[0-9]+@g\.us$/)
+      "Telefone do Cliente": z.string().regex(/^\+?[1-9]\d{1,14}$|^.+@g\.us$/)
     });
 
     const requestSchema = z.object({
