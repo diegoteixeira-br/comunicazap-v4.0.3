@@ -16,6 +16,8 @@ import {
   Tag,
   Cake,
   UserPlus,
+  Sparkles,
+  Bot,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
@@ -69,6 +71,11 @@ const Index = () => {
       title: "Calendário de Aniversários",
       description: "Gerencie e envie mensagens de aniversário para seus contatos automaticamente",
     },
+    {
+      icon: Sparkles,
+      title: "Variações com IA",
+      description: "IA que reescreve suas mensagens automaticamente, mantendo o sentido mas com palavras diferentes",
+    },
   ];
   const benefits = [
     {
@@ -100,6 +107,11 @@ const Index = () => {
       icon: CheckCircle,
       title: "Status em Tempo Real",
       description: "Veja o status de cada mensagem durante o processo de envio",
+    },
+    {
+      icon: Bot,
+      title: "Proteção Anti-Bloqueio",
+      description: "Sistema inteligente que cria variações únicas de cada mensagem automaticamente com IA",
     },
   ];
   return (
@@ -248,8 +260,8 @@ const Index = () => {
                 <div>
                   <h3 className="font-semibold mb-1">Personalize e Dispare</h3>
                   <p className="text-sm text-muted-foreground">
-                    Escreva sua mensagem personalizada, revise os contatos validados e inicie o envio automático com
-                    delay aleatório de 2 a 3 minutos para simular comportamento humano.
+                    Escreva sua mensagem personalizada e nossa IA cria variações únicas automaticamente. O envio usa
+                    delay aleatório de 2 a 3 minutos para simular comportamento humano e evitar bloqueios.
                   </p>
                 </div>
               </div>
@@ -361,6 +373,12 @@ const Index = () => {
                     <CheckCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                     <span className="text-sm">
                       <strong>Suporte prioritário</strong> via chat na plataforma
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                    <span className="text-sm">
+                      <strong>IA para variações</strong> - mensagens únicas automaticamente
                     </span>
                   </li>
                 </ul>

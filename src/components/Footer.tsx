@@ -8,7 +8,14 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           {/* Coluna 1: Sobre a Empresa */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">DT Soluções Digital</h3>
+            <a 
+              href="https://dtsolucoesdigital.com.br" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-lg font-semibold mb-4 hover:text-primary transition-colors inline-block"
+            >
+              DT Soluções Digital
+            </a>
             <p className="text-muted-foreground text-sm leading-relaxed">
               Uma plataforma de automação inteligente para suas campanhas de marketing no WhatsApp. Conecte-se com seus
               clientes de forma eficaz e profissional.
@@ -35,6 +42,14 @@ export const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Informações</h3>
             <div className="space-y-2 text-sm text-muted-foreground">
+              <a 
+                href="https://dtsolucoesdigital.com.br" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-primary hover:underline font-medium"
+              >
+                🌐 dtsolucoesdigital.com.br
+              </a>
               <p>
                 <strong>Razão Social:</strong> DT Soluções Digital - MEI
               </p>

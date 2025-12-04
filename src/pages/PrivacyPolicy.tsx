@@ -45,6 +45,11 @@ const PrivacyPolicy = () => {
               <li>Páginas visitadas e tempo de navegação</li>
               <li>Data e hora de acesso</li>
             </ul>
+
+            <h3>2.3 Informações Processadas Temporariamente</h3>
+            <ul>
+              <li>Conteúdo das mensagens para geração de variações (processado temporariamente, não armazenado)</li>
+            </ul>
           </section>
 
           <section>
@@ -63,6 +68,7 @@ const PrivacyPolicy = () => {
               <li>Fornecer lembretes automáticos de aniversários dos seus contatos</li>
               <li>Organizar e segmentar contatos através do sistema de tags</li>
               <li>Facilitar o envio de mensagens para grupos do WhatsApp</li>
+              <li>Processar mensagens através de inteligência artificial para gerar variações únicas (dados não são armazenados após processamento)</li>
             </ul>
           </section>
 
@@ -181,8 +187,21 @@ const PrivacyPolicy = () => {
             </p>
             <ul>
               <li>E-mail: contato@dtsolucoesdigital.com.br</li>
-              
-              
+            </ul>
+          </section>
+
+          <section>
+            <h2>13. Uso de Inteligência Artificial</h2>
+            <p>
+              Nossa plataforma utiliza inteligência artificial para gerar variações das mensagens enviadas. 
+              É importante esclarecer que:
+            </p>
+            <ul>
+              <li>O conteúdo das mensagens é processado temporariamente apenas para gerar variações</li>
+              <li>Não armazenamos o conteúdo das mensagens após o processamento</li>
+              <li>As variações mantêm o sentido original mas com palavras diferentes</li>
+              <li>O objetivo é proteger sua conta contra detecção de mensagens em massa</li>
+              <li>Nenhum dado é utilizado para treinamento de modelos de IA</li>
             </ul>
           </section>
         </article>

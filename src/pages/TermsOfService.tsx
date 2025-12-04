@@ -36,6 +36,7 @@ const TermsOfService = () => {
               <li>Gestão de contatos com sistema de tags e segmentação</li>
               <li>Calendário de aniversários e lembretes automáticos</li>
               <li>Histórico e relatórios de campanhas</li>
+              <li>Geração automática de variações de mensagens com inteligência artificial para proteção anti-bloqueio</li>
             </ul>
           </section>
 
@@ -62,6 +63,7 @@ const TermsOfService = () => {
               <li>Respeitar os Termos de Serviço do WhatsApp</li>
               <li>Usar o envio para grupos de forma responsável, respeitando os participantes</li>
               <li>Não fazer uso abusivo do sistema de tags para práticas invasivas</li>
+              <li>Entender que as variações de mensagens geradas por IA são para proteção e não garantem 100% de prevenção contra bloqueios</li>
             </ul>
           </section>
 
@@ -107,6 +109,8 @@ const TermsOfService = () => {
               <li>Conteúdo ou consequências de mensagens enviadas para grupos do WhatsApp</li>
               <li>Remoção de grupos ou bloqueios por administradores devido ao uso inadequado</li>
               <li>Uso inadequado de informações de aniversários pelos usuários</li>
+              <li>Resultados das variações geradas por inteligência artificial</li>
+              <li>Bloqueios que possam ocorrer mesmo com uso do sistema de variações</li>
             </ul>
           </section>
 
