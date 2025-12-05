@@ -6,8 +6,10 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, History, Phone, Power, Loader2, RefreshCw, Unplug, CreditCard, Crown, Clock, Zap, AlertCircle, Send, XCircle, Eye, EyeOff, Users, Shield, FileText } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { MessageSquare, History, Phone, Power, Loader2, RefreshCw, Unplug, CreditCard, Crown, Clock, Zap, AlertCircle, Send, XCircle, Eye, EyeOff, Users, Shield, FileText, Settings } from 'lucide-react';
 import { ImportContactsModal } from '@/components/ImportContactsModal';
+import { ProfileSettingsModal } from '@/components/ProfileSettingsModal';
 import { UsageStats } from '@/components/UsageStats';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { SupportChat } from '@/components/SupportChat';
@@ -24,6 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { STRIPE_PRODUCTS } from '@/config/stripeProducts';
+
 interface SubscriptionStatus {
   subscribed: boolean;
   trial_active: boolean;
@@ -46,7 +49,7 @@ const Dashboard = () => {
   const [checkingSubscription, setCheckingSubscription] = useState(true);
   const [openingPortal, setOpeningPortal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
-  const [userProfile, setUserProfile] = useState<{ full_name: string | null } | null>(null);
+  const [userProfile, setUserProfile] = useState<{ full_name: string | null; avatar_url: string | null } | null>(null);
   const [showEmail, setShowEmail] = useState(() => {
     const saved = localStorage.getItem('showEmail');
     return saved !== null ? saved === 'true' : true;
@@ -56,6 +59,7 @@ const Dashboard = () => {
     return saved !== null ? saved === 'true' : true;
   });
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showProfileSettings, setShowProfileSettings] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -93,11 +97,18 @@ const Dashboard = () => {
   const fetchUserProfile = async () => {
     const { data } = await supabase
       .from('profiles')
-      .select('full_name')
+      .select('full_name, avatar_url')
       .eq('id', user?.id)
       .maybeSingle();
     
     setUserProfile(data);
+  };
+
+  const getInitials = () => {
+    if (userProfile?.full_name) {
+      return userProfile.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    }
+    return user?.email?.charAt(0).toUpperCase() || 'U';
   };
 
   const checkAdminRole = async () => {
@@ -456,6 +467,18 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={() => setShowProfileSettings(true)}
+              className="relative group"
+              title="Configurações do perfil"
+            >
+              <Avatar className="h-10 w-10 border-2 border-primary/20 hover:border-primary/50 transition-colors cursor-pointer">
+                <AvatarImage src={userProfile?.avatar_url || undefined} />
+                <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                  {getInitials()}
+                </AvatarFallback>
+              </Avatar>
+            </button>
             <ThemeToggle />
             {isAdmin && (
               <Button variant="outline" onClick={() => navigate('/admin/support')} className="gap-2">
@@ -463,6 +486,10 @@ const Dashboard = () => {
                 <span className="hidden sm:inline">Admin</span>
               </Button>
             )}
+            <Button variant="outline" onClick={() => setShowProfileSettings(true)} className="gap-2">
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">Config</span>
+            </Button>
             <Button variant="outline" onClick={handleSignOut} className="gap-2 flex-1 sm:flex-initial">
               <Power className="h-4 w-4" />
               <span className="sm:inline">Sair</span>
@@ -853,6 +880,17 @@ const Dashboard = () => {
               </Card>
             </div>
           </div>
+        )}
+
+        {/* Modal de Configurações do Perfil */}
+        {user && (
+          <ProfileSettingsModal
+            open={showProfileSettings}
+            onClose={() => setShowProfileSettings(false)}
+            user={user}
+            profile={userProfile}
+            onProfileUpdate={fetchUserProfile}
+          />
         )}
 
         {/* Modal de Importação de Contatos */}
