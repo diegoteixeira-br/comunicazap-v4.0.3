@@ -2,19 +2,23 @@ import { useTheme } from "next-themes";
 import { useEffect, useRef } from "react";
 
 export const ForceLightTheme = ({ children }: { children: React.ReactNode }) => {
-  const { theme, setTheme } = useTheme();
-  const previousTheme = useRef<string | undefined>();
+  const { setTheme } = useTheme();
+  const savedTheme = useRef<string | null>(null);
 
   useEffect(() => {
-    previousTheme.current = theme;
+    // Salvar a preferência DIRETAMENTE do localStorage antes de modificar
+    savedTheme.current = localStorage.getItem("theme");
+    
+    // Forçar tema light nas páginas públicas
     setTheme("light");
 
     return () => {
-      if (previousTheme.current) {
-        setTheme(previousTheme.current);
+      // Quando sair da página pública, restaurar a preferência original
+      if (savedTheme.current) {
+        setTheme(savedTheme.current);
       }
     };
-  }, []);
+  }, [setTheme]);
 
   return <>{children}</>;
 };
