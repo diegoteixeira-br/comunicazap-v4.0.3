@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, Loader2, Pause, Play, X } from 'lucide-react';
+import { ArrowLeft, Loader2, Pause, Play, X, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -21,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { CampaignDetailsDialog } from '@/components/CampaignDetailsDialog';
 
 const History = () => {
   const { user } = useAuth();
@@ -29,6 +30,8 @@ const History = () => {
   const [loading, setLoading] = useState(true);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [campaignToCancel, setCampaignToCancel] = useState<string | null>(null);
+  const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -149,6 +152,13 @@ const History = () => {
     return total > 0 ? Math.round((processed / total) * 100) : 0;
   };
 
+  const handleRowClick = (campaign: any, e: React.MouseEvent) => {
+    // Don't open details if clicking on action buttons
+    if ((e.target as HTMLElement).closest('button')) return;
+    setSelectedCampaign(campaign);
+    setDetailsOpen(true);
+  };
+
   const renderActions = (campaign: any) => {
     if (campaign.status === 'in_progress') {
       return (
@@ -157,7 +167,10 @@ const History = () => {
             variant="ghost"
             size="icon"
             className="h-7 w-7"
-            onClick={() => updateCampaignStatus(campaign.id, 'paused')}
+            onClick={(e) => {
+              e.stopPropagation();
+              updateCampaignStatus(campaign.id, 'paused');
+            }}
             title="Pausar"
           >
             <Pause className="h-4 w-4 text-blue-600" />
@@ -166,7 +179,10 @@ const History = () => {
             variant="ghost"
             size="icon"
             className="h-7 w-7"
-            onClick={() => handleCancelClick(campaign.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCancelClick(campaign.id);
+            }}
             title="Cancelar"
           >
             <X className="h-4 w-4 text-destructive" />
@@ -182,7 +198,10 @@ const History = () => {
             variant="ghost"
             size="icon"
             className="h-7 w-7"
-            onClick={() => updateCampaignStatus(campaign.id, 'in_progress')}
+            onClick={(e) => {
+              e.stopPropagation();
+              updateCampaignStatus(campaign.id, 'in_progress');
+            }}
             title="Retomar"
           >
             <Play className="h-4 w-4 text-green-600" />
@@ -191,7 +210,10 @@ const History = () => {
             variant="ghost"
             size="icon"
             className="h-7 w-7"
-            onClick={() => handleCancelClick(campaign.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCancelClick(campaign.id);
+            }}
             title="Cancelar"
           >
             <X className="h-4 w-4 text-destructive" />
@@ -200,7 +222,21 @@ const History = () => {
       );
     }
 
-    return <span className="text-muted-foreground text-xs">-</span>;
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7"
+        onClick={(e) => {
+          e.stopPropagation();
+          setSelectedCampaign(campaign);
+          setDetailsOpen(true);
+        }}
+        title="Ver detalhes"
+      >
+        <Eye className="h-4 w-4 text-muted-foreground" />
+      </Button>
+    );
   };
 
   return (
@@ -267,7 +303,11 @@ const History = () => {
                       </TableHeader>
                       <TableBody>
                         {campaigns.map((campaign) => (
-                          <TableRow key={campaign.id}>
+                          <TableRow 
+                            key={campaign.id} 
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={(e) => handleRowClick(campaign, e)}
+                          >
                             <TableCell className="font-medium text-xs sm:text-sm max-w-[150px] truncate">
                               {campaign.campaign_name}
                             </TableCell>
@@ -301,6 +341,12 @@ const History = () => {
           </Card>
         </div>
       </div>
+
+      <CampaignDetailsDialog
+        campaign={selectedCampaign}
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+      />
     </>
   );
 };
