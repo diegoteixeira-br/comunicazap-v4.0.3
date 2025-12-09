@@ -155,8 +155,8 @@ const Index = () => {
               Transforme seu WhatsApp em uma Máquina de Vendas e Fidelização
             </h1>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Transforme seu WhatsApp em uma Máquina de Vendas. Importe contatos, gerencie aniversariantes e faça
-              disparos em massa sem risco de bloqueio.
+              Disparo em Massa via WhatsApp. Importe contatos, gerencie aniversariantes e faça disparos em massa sem
+              risco de bloqueio.
               <span className="text-primary font-semibold"> Comece com 7 dias de teste grátis!</span>
             </p>
           </div>
