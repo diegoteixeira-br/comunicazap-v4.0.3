@@ -47,9 +47,7 @@ export const Footer = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-primary hover:underline font-medium"
-              >
-                🌐 dtsolucoesdigital.com.br
-              </a>
+              ></a>
               <p>
                 <strong>Razão Social:</strong> DT Soluções Digital - MEI
               </p>
