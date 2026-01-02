@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, Loader2, Pause, Play, X, Eye, Clock, Send } from 'lucide-react';
+import { ArrowLeft, Loader2, Pause, Play, X, Eye, Clock, Send, CalendarClock, Lock, CreditCard } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -21,7 +21,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { CampaignDetailsDialog } from '@/components/CampaignDetailsDialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 const History = () => {
   const { user } = useAuth();
@@ -32,6 +46,13 @@ const History = () => {
   const [campaignToCancel, setCampaignToCancel] = useState<string | null>(null);
   const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  
+  // Reschedule state
+  const [rescheduleDialogOpen, setRescheduleDialogOpen] = useState(false);
+  const [campaignToReschedule, setCampaignToReschedule] = useState<any>(null);
+  const [newScheduledDate, setNewScheduledDate] = useState<Date>();
+  const [newScheduledTime, setNewScheduledTime] = useState("12:00");
+  const [isRescheduling, setIsRescheduling] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -113,7 +134,61 @@ const History = () => {
     setCampaignToCancel(null);
   };
 
-const getStatusBadge = (status: string) => {
+  const handleRescheduleClick = (campaign: any) => {
+    setCampaignToReschedule(campaign);
+    if (campaign.scheduled_at) {
+      const scheduledDate = new Date(campaign.scheduled_at);
+      setNewScheduledDate(scheduledDate);
+      setNewScheduledTime(format(scheduledDate, 'HH:mm'));
+    } else {
+      setNewScheduledDate(new Date());
+      setNewScheduledTime("12:00");
+    }
+    setRescheduleDialogOpen(true);
+  };
+
+  const handleReschedule = async () => {
+    if (!campaignToReschedule || !newScheduledDate) return;
+    
+    setIsRescheduling(true);
+    
+    try {
+      const [hours, minutes] = newScheduledTime.split(':').map(Number);
+      const scheduledAt = new Date(newScheduledDate);
+      scheduledAt.setHours(hours, minutes, 0, 0);
+      
+      if (scheduledAt <= new Date()) {
+        toast.error('A data/hora deve ser no futuro');
+        return;
+      }
+      
+      const { error } = await supabase
+        .from('message_campaigns')
+        .update({ scheduled_at: scheduledAt.toISOString(), status: 'scheduled' })
+        .eq('id', campaignToReschedule.id)
+        .eq('user_id', user?.id);
+
+      if (error) {
+        toast.error('Erro ao reagendar campanha');
+        console.error('Error rescheduling campaign:', error);
+        return;
+      }
+
+      setCampaigns(prev => prev.map(c => 
+        c.id === campaignToReschedule.id 
+          ? { ...c, scheduled_at: scheduledAt.toISOString(), status: 'scheduled' } 
+          : c
+      ));
+
+      toast.success('Campanha reagendada com sucesso!');
+      setRescheduleDialogOpen(false);
+      setCampaignToReschedule(null);
+    } finally {
+      setIsRescheduling(false);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { variant: any; label: string; className?: string }> = {
       pending: { variant: 'secondary', label: 'Pendente' },
       in_progress: { variant: 'outline', label: 'Em Andamento', className: 'border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-950/30' },
@@ -122,6 +197,7 @@ const getStatusBadge = (status: string) => {
       completed: { variant: 'default', label: 'Concluída', className: 'bg-green-600 hover:bg-green-700' },
       failed: { variant: 'destructive', label: 'Falhou' },
       scheduled: { variant: 'outline', label: 'Agendada', className: 'border-purple-500 text-purple-600 bg-purple-50 dark:bg-purple-950/30' },
+      blocked: { variant: 'outline', label: 'Bloqueada', className: 'border-red-500 text-red-600 bg-red-50 dark:bg-red-950/30' },
     };
 
     const config = statusMap[status] || statusMap.pending;
@@ -150,6 +226,24 @@ const getStatusBadge = (status: string) => {
           <Clock className="h-3 w-3 mr-1" />
           {config.label}
         </Badge>
+      );
+    }
+
+    if (status === 'blocked') {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <Badge variant={config.variant} className={config.className}>
+                <Lock className="h-3 w-3 mr-1" />
+                {config.label}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Campanha pausada por falta de assinatura ativa</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       );
     }
     
@@ -190,6 +284,26 @@ const sendScheduledNow = async (campaignId: string) => {
   };
 
   const renderActions = (campaign: any) => {
+    if (campaign.status === 'blocked') {
+      return (
+        <div className="flex gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs gap-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate('/subscription');
+            }}
+            title="Assinar para desbloquear"
+          >
+            <CreditCard className="h-3 w-3" />
+            <span className="hidden sm:inline">Assinar</span>
+          </Button>
+        </div>
+      );
+    }
+
     if (campaign.status === 'scheduled') {
       return (
         <div className="flex gap-1">
@@ -204,6 +318,18 @@ const sendScheduledNow = async (campaignId: string) => {
             title="Enviar Agora"
           >
             <Send className="h-4 w-4 text-green-600" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRescheduleClick(campaign);
+            }}
+            title="Reagendar"
+          >
+            <CalendarClock className="h-4 w-4 text-purple-600" />
           </Button>
           <Button
             variant="ghost"
@@ -321,6 +447,77 @@ const sendScheduledNow = async (campaignId: string) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Reschedule Dialog */}
+      <Dialog open={rescheduleDialogOpen} onOpenChange={setRescheduleDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarClock className="h-5 w-5 text-purple-600" />
+              Reagendar Campanha
+            </DialogTitle>
+            <DialogDescription>
+              Escolha uma nova data e hora para o envio da campanha "{campaignToReschedule?.campaign_name}"
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label>Nova Data</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !newScheduledDate && "text-muted-foreground"
+                    )}
+                  >
+                    <Clock className="mr-2 h-4 w-4" />
+                    {newScheduledDate ? format(newScheduledDate, "PPP", { locale: ptBR }) : "Selecionar data"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={newScheduledDate}
+                    onSelect={setNewScheduledDate}
+                    disabled={(date) => date < new Date()}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="time">Horário</Label>
+              <Input
+                id="time"
+                type="time"
+                value={newScheduledTime}
+                onChange={(e) => setNewScheduledTime(e.target.value)}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRescheduleDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleReschedule} disabled={isRescheduling || !newScheduledDate}>
+              {isRescheduling ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                'Reagendar'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="min-h-screen bg-gradient-to-br from-primary/10 to-secondary/10 p-3 sm:p-4">
         <div className="max-w-6xl mx-auto">

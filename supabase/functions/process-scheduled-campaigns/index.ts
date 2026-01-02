@@ -66,10 +66,41 @@ serve(async (req) => {
 
     let processedCount = 0;
     let errorCount = 0;
+    let blockedCount = 0;
 
     for (const campaign of scheduledCampaigns) {
       try {
         console.log(`\n🚀 Processando campanha ${campaign.id}: ${campaign.campaign_name}`);
+
+        // Verificar assinatura do usuário antes de processar
+        const { data: subscription, error: subError } = await supabaseClient
+          .from('user_subscriptions')
+          .select('status, trial_active, trial_ends_at, current_period_end')
+          .eq('user_id', campaign.user_id)
+          .maybeSingle();
+
+        if (subError) {
+          console.error(`❌ Erro ao verificar assinatura:`, subError);
+        }
+
+        const hasAccess = subscription && (
+          (subscription.status === 'active' && 
+           subscription.current_period_end && 
+           new Date(subscription.current_period_end) > new Date()) ||
+          (subscription.trial_active && 
+           subscription.trial_ends_at && 
+           new Date(subscription.trial_ends_at) > new Date())
+        );
+
+        if (!hasAccess) {
+          console.log(`🚫 Usuário sem acesso ativo - bloqueando campanha ${campaign.id}`);
+          await supabaseClient
+            .from('message_campaigns')
+            .update({ status: 'blocked' })
+            .eq('id', campaign.id);
+          blockedCount++;
+          continue;
+        }
 
         const instance = campaign.whatsapp_instances;
 
@@ -198,14 +229,15 @@ serve(async (req) => {
       }
     }
 
-    console.log(`\n📊 Resumo: ${processedCount} processadas, ${errorCount} erros`);
+    console.log(`\n📊 Resumo: ${processedCount} processadas, ${errorCount} erros, ${blockedCount} bloqueadas`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: `Processed ${processedCount} campaigns`,
         processed: processedCount,
-        errors: errorCount
+        errors: errorCount,
+        blocked: blockedCount
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.process-scheduled-campaigns]
 verify_jwt = false
+
+[functions.reactivate-blocked-campaigns]
+verify_jwt = false

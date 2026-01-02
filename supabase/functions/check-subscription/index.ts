@@ -259,6 +259,28 @@ serve(async (req) => {
       }
       
       logStep("Subscription updated in database");
+      
+      // Reativar campanhas bloqueadas quando usuário tem assinatura ativa
+      try {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL");
+        const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+        
+        const reactivateResponse = await fetch(`${supabaseUrl}/functions/v1/reactivate-blocked-campaigns`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${serviceKey}`,
+          },
+          body: JSON.stringify({ user_id: user.id }),
+        });
+        
+        if (reactivateResponse.ok) {
+          const result = await reactivateResponse.json();
+          logStep("Blocked campaigns reactivated", { reactivated: result.reactivated });
+        }
+      } catch (reactivateError) {
+        logStep("Error reactivating blocked campaigns", { error: reactivateError });
+      }
     } else {
       logStep("No active subscription found");
       
