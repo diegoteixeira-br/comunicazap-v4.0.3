@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { Eye, EyeOff, ArrowLeft, Info } from 'lucide-react';
+import { useRecaptcha } from '@/hooks/useRecaptcha';
+import { Eye, EyeOff, ArrowLeft, Info, Shield } from 'lucide-react';
 import { ForceLightTheme } from '@/components/ForceLightTheme';
 import { formatDocument, validateDocument, cleanDocument } from '@/lib/document';
 
@@ -27,6 +28,7 @@ const Auth = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { executeRecaptcha, isLoaded: recaptchaLoaded } = useRecaptcha();
   const isResetMode = mode === 'reset';
 
   useEffect(() => {
@@ -52,11 +54,58 @@ const Auth = () => {
     return !!data;
   };
 
+  const verifyRecaptcha = async (action: string): Promise<boolean> => {
+    const token = await executeRecaptcha(action);
+    
+    if (!token) {
+      toast({
+        title: "Erro de verificação",
+        description: "Não foi possível verificar. Recarregue a página e tente novamente.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    try {
+      const response = await supabase.functions.invoke('verify-recaptcha', {
+        body: { token, expectedAction: action }
+      });
+
+      if (response.error || !response.data?.success) {
+        toast({
+          title: "Verificação falhou",
+          description: response.data?.error || "Atividade suspeita detectada. Tente novamente.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('reCAPTCHA verification error:', error);
+      toast({
+        title: "Erro de verificação",
+        description: "Erro ao verificar. Tente novamente.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      // Verify reCAPTCHA first
+      const action = isLogin ? 'login' : 'signup';
+      const isHuman = await verifyRecaptcha(action);
+      
+      if (!isHuman) {
+        setLoading(false);
+        return;
+      }
+
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -474,10 +523,15 @@ const Auth = () => {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={loading}
+                  disabled={loading || !recaptchaLoaded}
                 >
-                  {loading ? 'Carregando...' : isLogin ? 'Entrar' : 'Cadastrar'}
+                  {loading ? 'Verificando...' : !recaptchaLoaded ? 'Carregando proteção...' : isLogin ? 'Entrar' : 'Cadastrar'}
                 </Button>
+
+                <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-2">
+                  <Shield className="h-3 w-3" />
+                  <span>Protegido por reCAPTCHA</span>
+                </div>
               </form>
 
               {isLogin && (
