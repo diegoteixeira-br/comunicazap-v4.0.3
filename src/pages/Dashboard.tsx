@@ -374,6 +374,17 @@ const Dashboard = () => {
   };
 
   const handleNewCampaign = () => {
+    // Verifica se o documento foi informado
+    if (!userProfile?.document) {
+      toast({
+        title: "Complete seu cadastro",
+        description: "Informe seu CPF ou CNPJ antes de criar campanhas.",
+        variant: "destructive",
+      });
+      setShowProfileSettings(true);
+      return;
+    }
+
     // Permite navegação se tiver acesso (verificado ou via cache)
     if (subscription.has_access) {
       navigate('/select-import-method');
