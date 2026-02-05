@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.reactivate-blocked-campaigns]
 verify_jwt = false
+
+[functions.verify-recaptcha]
+verify_jwt = false
