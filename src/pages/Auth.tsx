@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, Info } from 'lucide-react';
 import { ForceLightTheme } from '@/components/ForceLightTheme';
+import { formatDocument, validateDocument, cleanDocument } from '@/lib/document';
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -19,6 +20,8 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [document, setDocument] = useState('');
+  const [documentError, setDocumentError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -31,6 +34,23 @@ const Auth = () => {
       navigate('/dashboard');
     }
   }, [user, navigate, isResetMode]);
+
+  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const formatted = formatDocument(value);
+    setDocument(formatted);
+    setDocumentError('');
+  };
+
+  const checkDocumentExists = async (doc: string): Promise<boolean> => {
+    const cleanDoc = cleanDocument(doc);
+    const { data } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('document', cleanDoc)
+      .maybeSingle();
+    return !!data;
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,10 +72,35 @@ const Auth = () => {
         
         navigate('/dashboard');
       } else {
+        // Validações de cadastro
         if (password !== confirmPassword) {
           toast({
             title: "Erro",
             description: "As senhas não coincidem.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Validar documento
+        const cleanDoc = cleanDocument(document);
+        if (!cleanDoc) {
+          setDocumentError('CPF ou CNPJ é obrigatório');
+          return;
+        }
+
+        if (!validateDocument(cleanDoc)) {
+          setDocumentError('CPF ou CNPJ inválido');
+          return;
+        }
+
+        // Verificar se documento já existe
+        const exists = await checkDocumentExists(document);
+        if (exists) {
+          setDocumentError('Este CPF/CNPJ já está vinculado a outra conta');
+          toast({
+            title: "Documento já cadastrado",
+            description: "Este CPF/CNPJ já está vinculado a outra conta. Faça login ou use outro documento.",
             variant: "destructive",
           });
           return;
@@ -68,6 +113,7 @@ const Auth = () => {
             emailRedirectTo: `${window.location.origin}/dashboard`,
             data: {
               full_name: fullName,
+              document: cleanDoc,
             },
           },
         });
@@ -326,17 +372,41 @@ const Auth = () => {
 
               <form onSubmit={handleAuth} className="space-y-4">
             {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Nome Completo</Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required={!isLogin}
-                  placeholder="Seu nome completo"
-                />
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Nome Completo</Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required={!isLogin}
+                    placeholder="Seu nome completo"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="document">CPF ou CNPJ *</Label>
+                  <Input
+                    id="document"
+                    type="text"
+                    value={document}
+                    onChange={handleDocumentChange}
+                    required={!isLogin}
+                    placeholder="000.000.000-00"
+                    maxLength={18}
+                    className={documentError ? 'border-destructive' : ''}
+                  />
+                  {documentError ? (
+                    <p className="text-xs text-destructive">{documentError}</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Info className="h-3 w-3" />
+                      Usado para evitar contas duplicadas e garantir segurança
+                    </p>
+                  )}
+                </div>
+              </>
             )}
 
             <div className="space-y-2">

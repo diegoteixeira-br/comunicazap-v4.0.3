@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/sessionClient';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -8,13 +8,14 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from '@/hooks/use-toast';
-import { Camera, Trash2, Loader2, User as UserIcon, Lock, Save } from 'lucide-react';
+import { Camera, Trash2, Loader2, User as UserIcon, Lock, Save, FileText } from 'lucide-react';
+import { formatDocument, getDocumentTypeName } from '@/lib/document';
 
 interface ProfileSettingsModalProps {
   open: boolean;
   onClose: () => void;
   user: User;
-  profile: { full_name: string | null; avatar_url: string | null } | null;
+  profile: { full_name: string | null; avatar_url: string | null; document?: string | null } | null;
   onProfileUpdate: () => void;
 }
 
@@ -35,6 +36,13 @@ export const ProfileSettingsModal = ({
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [removingAvatar, setRemovingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Update fullName when profile changes
+  useEffect(() => {
+    if (profile?.full_name) {
+      setFullName(profile.full_name);
+    }
+  }, [profile?.full_name]);
 
   const getInitials = () => {
     if (profile?.full_name) {
@@ -250,6 +258,9 @@ export const ProfileSettingsModal = ({
     }
   };
 
+  const formattedDocument = profile?.document ? formatDocument(profile.document) : null;
+  const documentTypeName = profile?.document ? getDocumentTypeName(profile.document) : null;
+
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
@@ -368,6 +379,24 @@ export const ProfileSettingsModal = ({
                 O email não pode ser alterado
               </p>
             </div>
+
+            {formattedDocument && (
+              <div className="space-y-2">
+                <Label htmlFor="document" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  {documentTypeName}
+                </Label>
+                <Input
+                  id="document"
+                  value={formattedDocument}
+                  disabled
+                  className="bg-muted"
+                />
+                <p className="text-xs text-muted-foreground">
+                  O documento não pode ser alterado por segurança
+                </p>
+              </div>
+            )}
 
             <Button
               onClick={saveProfile}
