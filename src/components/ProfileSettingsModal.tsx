@@ -28,6 +28,7 @@ export const ProfileSettingsModal = ({
 }: ProfileSettingsModalProps) => {
   const [fullName, setFullName] = useState(profile?.full_name || '');
   const [document, setDocument] = useState('');
+  const [savedDocument, setSavedDocument] = useState<string | null>(null);
   const [documentError, setDocumentError] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -39,7 +40,8 @@ export const ProfileSettingsModal = ({
   const [removingAvatar, setRemovingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const hasExistingDocument = !!profile?.document;
+  // Document is locked if it exists in profile OR was just saved in this session
+  const hasExistingDocument = !!profile?.document || !!savedDocument;
 
   // Update fullName when profile changes
   useEffect(() => {
@@ -252,6 +254,11 @@ export const ProfileSettingsModal = ({
 
       if (error) throw error;
 
+      // Lock document immediately after save
+      if (updateData.document) {
+        setSavedDocument(updateData.document);
+      }
+
       toast({
         title: 'Perfil atualizado',
         description: 'Suas informações foram salvas com sucesso.',
@@ -316,8 +323,10 @@ export const ProfileSettingsModal = ({
     }
   };
 
-  const formattedDocument = profile?.document ? formatDocument(profile.document) : null;
-  const documentTypeName = profile?.document ? getDocumentTypeName(profile.document) : null;
+  // Use savedDocument if just saved, otherwise use profile document
+  const displayDocument = savedDocument || profile?.document;
+  const formattedDocument = displayDocument ? formatDocument(displayDocument) : null;
+  const documentTypeName = displayDocument ? getDocumentTypeName(displayDocument) : null;
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
