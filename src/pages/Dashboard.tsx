@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessageSquare, History, Phone, Power, Loader2, RefreshCw, Unplug, CreditCard, Crown, Clock, Zap, AlertCircle, Send, XCircle, Eye, EyeOff, Users, Shield, FileText, Settings, Gift } from 'lucide-react';
+import { MessageSquare, History, Phone, Power, Loader2, RefreshCw, Unplug, CreditCard, Crown, Clock, Zap, AlertCircle, Send, XCircle, Eye, EyeOff, Users, Shield, FileText, Settings, Gift, Lock } from 'lucide-react';
 import { ImportContactsModal } from '@/components/ImportContactsModal';
 import { ProfileSettingsModal } from '@/components/ProfileSettingsModal';
 import { UsageStats } from '@/components/UsageStats';
@@ -654,20 +654,10 @@ const Dashboard = () => {
                 {/* Accent bar */}
                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
                 
-                {/* Badge positioned top-right inside card */}
-                <div className="absolute top-3 right-3 flex flex-col gap-1.5 items-end">
-                  <Badge className="bg-emerald-500/90 text-white text-[10px] px-2 py-0.5 font-medium">
-                    Agendamento
-                  </Badge>
-                  {subscription.loading && subscription.verified === false ? (
-                    <Badge variant="secondary" className="gap-1 text-[10px] px-2 py-0.5">
-                      <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                      Verificando
-                    </Badge>
-                  ) : subscription.verified && !subscription.has_access ? (
-                    <Badge variant="destructive" className="text-[10px] px-2 py-0.5">Bloqueado</Badge>
-                  ) : null}
-                </div>
+                {/* Novo badge - top right */}
+                <Badge className="absolute top-3 right-3 bg-emerald-500/90 text-white text-[10px] px-2 py-0.5 font-medium">
+                  Novo
+                </Badge>
 
                 <CardHeader className="pl-5">
                   <CardTitle className="flex items-center gap-3 text-xl font-bold">
@@ -675,6 +665,12 @@ const Dashboard = () => {
                       <Zap className="h-5 w-5 text-primary" />
                     </div>
                     Nova Campanha
+                    {/* Lock icon when blocked */}
+                    {subscription.loading && subscription.verified === false ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    ) : subscription.verified && !subscription.has_access ? (
+                      <Lock className="h-4 w-4 text-muted-foreground" />
+                    ) : null}
                   </CardTitle>
                   <CardDescription className="text-sm mt-2 text-muted-foreground">
                     Importar contatos e iniciar envio
