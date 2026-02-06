@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessageSquare, History, Phone, Power, Loader2, RefreshCw, Unplug, CreditCard, Crown, Clock, Zap, AlertCircle, Send, XCircle, Eye, EyeOff, Users, Shield, FileText, Settings } from 'lucide-react';
+import { MessageSquare, History, Phone, Power, Loader2, RefreshCw, Unplug, CreditCard, Crown, Clock, Zap, AlertCircle, Send, XCircle, Eye, EyeOff, Users, Shield, FileText, Settings, Gift } from 'lucide-react';
 import { ImportContactsModal } from '@/components/ImportContactsModal';
 import { ProfileSettingsModal } from '@/components/ProfileSettingsModal';
 import { UsageStats } from '@/components/UsageStats';
@@ -728,6 +728,24 @@ const Dashboard = () => {
                     </div>
                     <CardDescription className="text-base mt-3">
                       Gerencie seus modelos de mensagens
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </Link>
+
+              <Link to="/referral">
+                <Card className="cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 border-2 border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 h-full">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-3 text-2xl">
+                        <div className="p-3 rounded-lg bg-emerald-500/10">
+                          <Gift className="h-6 w-6 text-emerald-500" />
+                        </div>
+                        Indique e Ganhe
+                      </CardTitle>
+                    </div>
+                    <CardDescription className="text-base mt-3">
+                      Convide amigos e ganhe +30 dias grátis
                     </CardDescription>
                   </CardHeader>
                 </Card>
