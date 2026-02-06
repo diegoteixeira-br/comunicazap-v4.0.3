@@ -844,8 +844,8 @@ const Contacts = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
-      <div className="container max-w-7xl mx-auto px-4 py-6">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
           <Button
@@ -859,7 +859,9 @@ const Contacts = () => {
           
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold">Gestão de Contatos</h1>
+              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                Gestão de Contatos
+              </h1>
               <p className="text-muted-foreground mt-1">
                 Gerencie seus contatos e organize por tags
               </p>
@@ -903,7 +905,7 @@ const Contacts = () => {
         </div>
 
         {/* Filters and Search */}
-        <Card className="mb-6">
+        <Card className="mb-6 shadow-sm border-border/50">
           <CardContent className="pt-6">
             <div className="space-y-4">
               {/* Filtros e Busca */}
@@ -994,13 +996,13 @@ const Contacts = () => {
 
         {/* Contacts List */}
         {loading ? (
-          <Card>
+          <Card className="shadow-sm border-border/50">
             <CardContent className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </CardContent>
           </Card>
         ) : filteredContacts.length === 0 ? (
-          <Card>
+          <Card className="shadow-sm border-border/50">
             <CardContent className="flex flex-col items-center justify-center py-12">
               <p className="text-muted-foreground mb-4">Nenhum contato encontrado</p>
               <Button onClick={() => setShowAddDialog(true)}>
@@ -1010,7 +1012,7 @@ const Contacts = () => {
             </CardContent>
           </Card>
         ) : (
-          <Card>
+          <Card className="shadow-sm border-border/50">
             <CardHeader>
               <div className="flex flex-col gap-3">
                 <div className="flex justify-between items-center">

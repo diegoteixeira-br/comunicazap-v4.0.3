@@ -310,13 +310,13 @@ const Templates = () => {
           {/* Templates Padrão */}
           {!loading && defaultTemplates.length > 0 && (
             <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                 📋 Templates Padrão
                 <Badge variant="secondary">{defaultTemplates.length}</Badge>
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {defaultTemplates.map((template) => (
-                  <Card key={template.id} className="hover:border-primary/40 transition-colors">
+                  <Card key={template.id} className="shadow-sm border-border/50 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                     <CardHeader>
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
@@ -382,13 +382,13 @@ const Templates = () => {
           {/* Templates Personalizados */}
           {!loading && customTemplates.length > 0 && (
             <div className="mb-8">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                 ✏️ Meus Templates
                 <Badge variant="secondary">{customTemplates.length}</Badge>
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {customTemplates.map((template) => (
-                  <Card key={template.id} className="hover:border-primary/40 transition-colors">
+                  <Card key={template.id} className="shadow-sm border-border/50 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                     <CardHeader>
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">

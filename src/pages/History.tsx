@@ -519,7 +519,7 @@ const sendScheduledNow = async (campaignId: string) => {
         </DialogContent>
       </Dialog>
 
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 to-secondary/10 p-3 sm:p-4">
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4 md:p-8">
         <div className="max-w-6xl mx-auto">
           <Button
             variant="ghost"
@@ -531,9 +531,13 @@ const sendScheduledNow = async (campaignId: string) => {
             <span className="sm:hidden">Voltar</span>
           </Button>
 
-          <Card>
+          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-6">
+            Histórico de Campanhas
+          </h1>
+
+          <Card className="shadow-sm border-border/50">
             <CardHeader>
-              <CardTitle>Histórico de Campanhas</CardTitle>
+              <CardTitle className="text-xl font-bold">Suas Campanhas</CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
