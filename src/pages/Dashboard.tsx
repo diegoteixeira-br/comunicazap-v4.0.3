@@ -600,38 +600,40 @@ const Dashboard = () => {
 
             {/* Admin Quick Actions - Admin somente */}
             {isAdmin && (
-              <div className="mb-4">
-                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <div className="mb-6">
+                <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-foreground">
                   <Shield className="h-5 w-5 text-red-500" />
                   Administração
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Link to="/admin/support">
-                    <Card className="cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 border-2 border-red-500/30 bg-gradient-to-br from-red-500/5 to-orange-500/5 h-full">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-3 text-xl">
-                          <div className="p-3 rounded-lg bg-red-500/10">
+                  <Link to="/admin/support" className="block h-full">
+                    <Card className="relative cursor-pointer bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-border/50 overflow-hidden h-full">
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500" />
+                      <CardHeader className="pl-5">
+                        <CardTitle className="flex items-center gap-3 text-lg font-bold">
+                          <div className="p-2.5 rounded-lg bg-red-500/10">
                             <Shield className="h-5 w-5 text-red-500" />
                           </div>
                           Suporte
                         </CardTitle>
-                        <CardDescription className="text-base mt-2">
+                        <CardDescription className="text-sm mt-2 text-muted-foreground">
                           Ver conversas de suporte dos usuários
                         </CardDescription>
                       </CardHeader>
                     </Card>
                   </Link>
 
-                  <Link to="/admin/audit-log">
-                    <Card className="cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 border-2 border-purple-500/30 bg-gradient-to-br from-purple-500/5 to-pink-500/5 h-full">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-3 text-xl">
-                          <div className="p-3 rounded-lg bg-purple-500/10">
-                            <FileText className="h-5 w-5 text-purple-500" />
+                  <Link to="/admin/audit-log" className="block h-full">
+                    <Card className="relative cursor-pointer bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-border/50 overflow-hidden h-full">
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-orange-500" />
+                      <CardHeader className="pl-5">
+                        <CardTitle className="flex items-center gap-3 text-lg font-bold">
+                          <div className="p-2.5 rounded-lg bg-orange-500/10">
+                            <FileText className="h-5 w-5 text-orange-500" />
                           </div>
                           Auditoria
                         </CardTitle>
-                        <CardDescription className="text-base mt-2">
+                        <CardDescription className="text-sm mt-2 text-muted-foreground">
                           Log de ações administrativas
                         </CardDescription>
                       </CardHeader>
@@ -644,108 +646,105 @@ const Dashboard = () => {
             {/* Action Cards - Meio */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               <Card 
-                className={`cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 border-2 ${
-                  subscription.loading
-                    ? 'border-border bg-gradient-to-br from-muted/5 to-muted/10'
-                    : subscription.has_access 
-                    ? 'border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5' 
-                    : 'border-red-500/30 bg-gradient-to-br from-red-500/5 to-orange-500/5'
+                className={`relative cursor-pointer bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-border/50 overflow-hidden h-full ${
+                  !subscription.has_access && subscription.verified ? 'opacity-75' : ''
                 }`}
                 onClick={handleNewCampaign}
               >
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-3 text-2xl">
-                      <div className="p-3 rounded-lg bg-primary/10">
-                        <Zap className="h-6 w-6 text-primary" />
-                      </div>
-                      Nova Campanha
-                      <Badge variant="secondary" className="bg-green-500 text-white text-xs">
-                        Novo: Agendamento
-                      </Badge>
-                    </CardTitle>
-                    {subscription.loading && subscription.verified === false ? (
-                      <Badge variant="secondary" className="gap-1">
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        Verificando...
-                      </Badge>
-                    ) : subscription.verified && !subscription.has_access ? (
-                      <Badge variant="destructive">Bloqueado</Badge>
-                    ) : null}
-                  </div>
-                  <CardDescription className="text-base mt-3">
-                    Importar contatos do WhatsApp e iniciar envio
+                {/* Accent bar */}
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
+                
+                {/* Badge positioned top-right inside card */}
+                <div className="absolute top-3 right-3 flex flex-col gap-1.5 items-end">
+                  <Badge className="bg-emerald-500/90 text-white text-[10px] px-2 py-0.5 font-medium">
+                    Agendamento
+                  </Badge>
+                  {subscription.loading && subscription.verified === false ? (
+                    <Badge variant="secondary" className="gap-1 text-[10px] px-2 py-0.5">
+                      <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                      Verificando
+                    </Badge>
+                  ) : subscription.verified && !subscription.has_access ? (
+                    <Badge variant="destructive" className="text-[10px] px-2 py-0.5">Bloqueado</Badge>
+                  ) : null}
+                </div>
+
+                <CardHeader className="pl-5">
+                  <CardTitle className="flex items-center gap-3 text-xl font-bold">
+                    <div className="p-2.5 rounded-lg bg-primary/10">
+                      <Zap className="h-5 w-5 text-primary" />
+                    </div>
+                    Nova Campanha
+                  </CardTitle>
+                  <CardDescription className="text-sm mt-2 text-muted-foreground">
+                    Importar contatos e iniciar envio
                   </CardDescription>
                 </CardHeader>
               </Card>
 
-              <Link to="/contacts">
-                <Card className="cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 border-2 border-blue-500/30 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 h-full">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center gap-3 text-2xl">
-                        <div className="p-3 rounded-lg bg-blue-500/10">
-                          <Users className="h-6 w-6 text-blue-500" />
-                        </div>
-                        Contatos
-                      </CardTitle>
-                    </div>
-                    <CardDescription className="text-base mt-3">
+              <Link to="/contacts" className="block h-full">
+                <Card className="relative cursor-pointer bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-border/50 overflow-hidden h-full">
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500" />
+                  <CardHeader className="pl-5">
+                    <CardTitle className="flex items-center gap-3 text-xl font-bold">
+                      <div className="p-2.5 rounded-lg bg-blue-500/10">
+                        <Users className="h-5 w-5 text-blue-500" />
+                      </div>
+                      Contatos
+                    </CardTitle>
+                    <CardDescription className="text-sm mt-2 text-muted-foreground">
                       Gerencie seus contatos e tags
                     </CardDescription>
                   </CardHeader>
                 </Card>
               </Link>
 
-              <Link to="/history">
-                <Card className="cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 border-2 border-accent/30 bg-gradient-to-br from-accent/5 to-primary/5 h-full">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center gap-3 text-2xl">
-                        <div className="p-3 rounded-lg bg-accent/10">
-                          <History className="h-6 w-6 text-accent" />
-                        </div>
-                        Histórico
-                      </CardTitle>
-                    </div>
-                    <CardDescription className="text-base mt-3">
-                      Visualizar todas as campanhas anteriores
+              <Link to="/history" className="block h-full">
+                <Card className="relative cursor-pointer bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-border/50 overflow-hidden h-full">
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent" />
+                  <CardHeader className="pl-5">
+                    <CardTitle className="flex items-center gap-3 text-xl font-bold">
+                      <div className="p-2.5 rounded-lg bg-accent/10">
+                        <History className="h-5 w-5 text-accent" />
+                      </div>
+                      Histórico
+                    </CardTitle>
+                    <CardDescription className="text-sm mt-2 text-muted-foreground">
+                      Visualizar campanhas anteriores
                     </CardDescription>
                   </CardHeader>
                 </Card>
               </Link>
 
-              <Link to="/templates">
-                <Card className="cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 border-2 border-purple-500/30 bg-gradient-to-br from-purple-500/5 to-pink-500/5 h-full">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center gap-3 text-2xl">
-                        <div className="p-3 rounded-lg bg-purple-500/10">
-                          <FileText className="h-6 w-6 text-purple-500" />
-                        </div>
-                        Templates
-                      </CardTitle>
-                    </div>
-                    <CardDescription className="text-base mt-3">
-                      Gerencie seus modelos de mensagens
+              <Link to="/templates" className="block h-full">
+                <Card className="relative cursor-pointer bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-border/50 overflow-hidden h-full">
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-500" />
+                  <CardHeader className="pl-5">
+                    <CardTitle className="flex items-center gap-3 text-xl font-bold">
+                      <div className="p-2.5 rounded-lg bg-purple-500/10">
+                        <FileText className="h-5 w-5 text-purple-500" />
+                      </div>
+                      Templates
+                    </CardTitle>
+                    <CardDescription className="text-sm mt-2 text-muted-foreground">
+                      Gerencie modelos de mensagens
                     </CardDescription>
                   </CardHeader>
                 </Card>
               </Link>
 
-              <Link to="/referral">
-                <Card className="cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 border-2 border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 h-full">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center gap-3 text-2xl">
-                        <div className="p-3 rounded-lg bg-emerald-500/10">
-                          <Gift className="h-6 w-6 text-emerald-500" />
-                        </div>
-                        Indique e Ganhe
-                      </CardTitle>
-                    </div>
-                    <CardDescription className="text-base mt-3">
-                      Convide amigos e ganhe +30 dias grátis
+              <Link to="/referral" className="block h-full">
+                <Card className="relative cursor-pointer bg-card shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-border/50 overflow-hidden h-full">
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500" />
+                  <CardHeader className="pl-5">
+                    <CardTitle className="flex items-center gap-3 text-xl font-bold">
+                      <div className="p-2.5 rounded-lg bg-emerald-500/10">
+                        <Gift className="h-5 w-5 text-emerald-500" />
+                      </div>
+                      Indique e Ganhe
+                    </CardTitle>
+                    <CardDescription className="text-sm mt-2 text-muted-foreground">
+                      Convide amigos e ganhe +30 dias
                     </CardDescription>
                   </CardHeader>
                 </Card>
