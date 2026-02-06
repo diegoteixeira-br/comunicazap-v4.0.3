@@ -257,6 +257,8 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          referral_code: string | null
+          referred_by_code: string | null
           updated_at: string | null
         }
         Insert: {
@@ -266,6 +268,8 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          referral_code?: string | null
+          referred_by_code?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -275,9 +279,62 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          referral_code?: string | null
+          referred_by_code?: string | null
           updated_at?: string | null
         }
         Relationships: []
+      }
+      referrals: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          referral_code: string
+          referred_bonus_applied: boolean
+          referred_user_id: string
+          referrer_bonus_applied: boolean
+          referrer_user_id: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          referral_code: string
+          referred_bonus_applied?: boolean
+          referred_user_id: string
+          referrer_bonus_applied?: boolean
+          referrer_user_id: string
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          referral_code?: string
+          referred_bonus_applied?: boolean
+          referred_user_id?: string
+          referrer_bonus_applied?: boolean
+          referrer_user_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referred_user_id_fkey"
+            columns: ["referred_user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_user_id_fkey"
+            columns: ["referrer_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       support_chat_messages: {
         Row: {
@@ -463,6 +520,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_referral_bonus: {
+        Args: { p_referred_user_id: string }
+        Returns: Json
+      }
+      create_referral_on_signup: {
+        Args: { p_referral_code: string; p_referred_user_id: string }
+        Returns: boolean
+      }
+      generate_referral_code: { Args: never; Returns: string }
       get_daily_limit: {
         Args: { p_user_id: string }
         Returns: {
